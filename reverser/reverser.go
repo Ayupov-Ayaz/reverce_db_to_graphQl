@@ -1,7 +1,6 @@
 package reverser
 
 import (
-	"fmt"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/db"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/model"
 	"html/template"
@@ -37,11 +36,12 @@ func (r *Reverser) Reverse(db *db.DB) error {
 }
 
 func sendToTemplate(tables *[]model.Table) {
-	t, err := template.New("tables").Parse(getTemplateStruct())
+	t, err := template.New("tables").Funcs(model.GetFuncMap()).Parse(getTemplateStruct())
 	if err != nil { panic(err) }
 	for _,table := range *tables {
-		fmt.Println(table.Name)
-		t.Execute(os.Stdout, &table)
+		if err := t.Execute(os.Stdout, table); err != nil {
+			panic(err)
+		}
 	}
 
 }
