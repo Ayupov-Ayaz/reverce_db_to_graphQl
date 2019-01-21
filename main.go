@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/daemon"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/db"
+	"log"
 )
 
 func processFlags() *daemon.Config {
@@ -18,7 +19,18 @@ func processFlags() *daemon.Config {
 	return &cfg
 }
 
+func getTablesNameForScanning() *[]string {
+	return  &[]string{
+		// set database tables names
+	}
+}
+
 func main() {
 	cfg := processFlags()
-	daemon.Run(cfg)
+	tables := getTablesNameForScanning()
+	if len(*tables) < 1 {
+		log.Println("ERROR| main() | Не заданы таблицы для сканирования!")
+		return
+	}
+	daemon.Run(cfg, tables)
 }
