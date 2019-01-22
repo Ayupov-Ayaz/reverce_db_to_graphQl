@@ -1,10 +1,5 @@
 package model
 
-import (
-	"html/template"
-	"log"
-	"strconv"
-)
 
 type Table struct {
 	Name string
@@ -19,57 +14,4 @@ type Field struct {
 	IsForeign bool `db:"is_foreign"`
 	IsNullable bool `db:"is_nullable"`
 	MaxLength int `db:"max_length"`
-}
-
-type ForeignKey struct {
-	FieldName string `db:"field_name"`
-	FkToTable string `db:"fk_to_table"`
-	PkField string 	`db:"pk_field"`
-}
-
-func (f *Field) IsPrimaryKey() string {
-	if f.IsPrimary {
-		return "@primary"
-	}
-	return ""
-}
-
-func (f *Field) IsNullableField() string {
-	if f.IsNullable {
-		return ""
-	}
-	return "!"
-}
-
-func (f *Field) GetGraphQlType() string {
-	switch f.Type {
-	case "varchar":  return "String"
-	case "datetime": return "Datetime"
-	case "date": 	 return "Date"
-	case "int": 	 return "Int"
-	case "float": 	 return "Float"
-	case "tinyint":  return "Boolean"
-	case "numeric":  return "Int"
-	case "char":	 return "String"
-	default:
-		log.Printf("\n| ERROR | Не указан преобразователь типа для %s, тип найден у поля %s\n", f.Type, f.Name)
-		return f.Type
-	}
-}
-
-func (f *Field) GetValidate() string {
-	if f.MaxLength != 0 {
-		return "@validate(max:" + strconv.Itoa(f.MaxLength)+")"
-	}
-	return ""
-}
-
-func GetFuncMap() template.FuncMap {
-	field := Field{}
-	return template.FuncMap{
-		"IsPrimaryKey"      : field.IsPrimaryKey,
-		"IsNullableField"	: field.IsNullableField,
-		"GetValidate"       : field.GetValidate,
-		"GetGraphQlType"	: field.GetGraphQlType,
-	}
 }
