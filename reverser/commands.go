@@ -11,12 +11,7 @@ import (
  */
 func getTableStruct(tableName string, db *db.DB)  (table *model.Table, err error) {
 
-	fields := &[]model.Field{}
-
-	t := &model.Table{
-		Name: tableName,
-		Fields: fields,
-	}
+	fields := []*model.Field{}
 
 	query := `
 		select distinct
@@ -45,8 +40,13 @@ func getTableStruct(tableName string, db *db.DB)  (table *model.Table, err error
 
 	    where t_c.TABLE_NAME = ? `
 
-	if  err := db.Select(fields, query, tableName); err != nil {
+	if  err := db.Select(&fields, query, tableName); err != nil {
 		return nil, err
+	}
+
+	t := &model.Table{
+		Name: tableName,
+		Fields: fields,
 	}
 
 	return t, nil
@@ -55,9 +55,9 @@ func getTableStruct(tableName string, db *db.DB)  (table *model.Table, err error
 /**
 	Получение внешних ключей таблицы
  */
-func GetForeignKeys(tableName string, db *db.DB) *[]model.ForeignKey {
+func GetForeignKeys(tableName string, db *db.DB) []*model.ForeignKey {
 
-	foreignKeyses := &[]model.ForeignKey{}
+	foreignKeyses := []*model.ForeignKey{}
 
 	query := `
 	select
@@ -80,8 +80,10 @@ func GetForeignKeys(tableName string, db *db.DB) *[]model.ForeignKey {
                   on fk.referenced_object_id = tab_prim.object_id
 	where tab.name= ?
 	`
-	if err := db.Select(foreignKeyses, query, tableName); err != nil {
+	if err := db.Select(&foreignKeyses, query, tableName); err != nil {
 		log.Printf("| ERROR | GetForeignKeys( %s ) : \n %s \n", tableName, err.Error())
+		panic(err)
 	}
+
 	return foreignKeyses
 }

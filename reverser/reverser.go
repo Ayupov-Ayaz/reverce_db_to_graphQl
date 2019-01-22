@@ -22,7 +22,7 @@ func NewReverser(tables *[]string) *Reverser {
 }
 
 func (r *Reverser) Reverse(db *db.DB) error {
-	var tableStructs = make([]model.Table, 0)
+	var tableStructs = make([]*model.Table, 0)
 
 	// Получаем структуры таблиц
 	for _, table := range r.Tables {
@@ -30,20 +30,20 @@ func (r *Reverser) Reverse(db *db.DB) error {
 		if err != nil {
 			panic(err)
 		}
+
 		// достаем внешние ключи
 		tableStruct.ForeignKeys = GetForeignKeys(table, db)
-		tableStructs = append(tableStructs, *tableStruct)
+		tableStructs = append(tableStructs, tableStruct)
 	}
+
 	// отправляем в шаблон
-	sendToTemplate(&tableStructs)
+	sendToTemplate(tableStructs)
 	return nil
 }
 
-func sendToTemplate(tables *[]model.Table) {
-
+func sendToTemplate(tables []*model.Table) {
 
 	field := model.Field{}
-
 	funcMap :=  template.FuncMap{
 		"IsPrimaryKey"      : field.IsPrimaryKey,
 		"IsNullableField"	: field.IsNullableField,
@@ -54,7 +54,7 @@ func sendToTemplate(tables *[]model.Table) {
 
 	t, err := template.New("tables").Funcs(funcMap).Parse(getTemplateStruct())
 	if err != nil { panic(err) }
-	for _,table := range *tables {
+	for _,table := range tables {
 		fileName := "results/" + table.Name + ".graphQl"
 		fo, err := os.Create(fileName)
 		if err != nil {log.Printf("| ERROR | Не удалось открыть файл %s, \n", fileName)}
