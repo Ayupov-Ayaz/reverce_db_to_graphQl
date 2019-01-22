@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"log"
 	"strconv"
 )
@@ -13,6 +12,7 @@ type Field struct {
 	IsForeign bool `db:"is_foreign"`
 	IsNullable bool `db:"is_nullable"`
 	MaxLength int `db:"max_length"`
+	FkType *string
 }
 
 func (f *Field) IsPrimaryKey() string {
@@ -46,8 +46,7 @@ func (f *Field) GetGraphQlType() string {
 }
 
 func GetForeignType(f *Field)  string {
-	fmt.Println(f)
-	return ""
+	return *f.FkType
 }
 
 func (f *Field) GetValidate() string {
