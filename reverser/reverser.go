@@ -40,7 +40,19 @@ func (r *Reverser) Reverse(db *db.DB) error {
 }
 
 func sendToTemplate(tables *[]model.Table) {
-	t, err := template.New("tables").Funcs(model.GetFuncMap()).Parse(getTemplateStruct())
+
+
+	field := model.Field{}
+
+	funcMap :=  template.FuncMap{
+		"IsPrimaryKey"      : field.IsPrimaryKey,
+		"IsNullableField"	: field.IsNullableField,
+		"GetValidate"       : field.GetValidate,
+		"GetGraphQlType"	: field.GetGraphQlType,
+		"GetForeignType" 	: model.GetForeignType,
+	}
+
+	t, err := template.New("tables").Funcs(funcMap).Parse(getTemplateStruct())
 	if err != nil { panic(err) }
 	for _,table := range *tables {
 		fileName := "results/" + table.Name + ".graphQl"
