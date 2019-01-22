@@ -9,6 +9,7 @@ import (
 type Table struct {
 	Name string
 	Fields *[]Field
+	ForeignKeys *[]ForeignKey
 }
 
 type Field struct {
@@ -18,6 +19,12 @@ type Field struct {
 	IsForeign bool `db:"is_foreign"`
 	IsNullable bool `db:"is_nullable"`
 	MaxLength int `db:"max_length"`
+}
+
+type ForeignKey struct {
+	FieldName string `db:"field_name"`
+	FkToTable string `db:"fk_to_table"`
+	PkField string 	`db:"pk_field"`
 }
 
 func (f *Field) IsPrimaryKey() string {
