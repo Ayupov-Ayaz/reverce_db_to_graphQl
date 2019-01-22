@@ -30,8 +30,11 @@ func (r *Reverser) Reverse(db *db.DB) error {
 		if err != nil {
 			panic(err)
 		}
+		// достаем внешние ключи
+		tableStruct.ForeignKeys = GetForeignKeys(table, db)
 		tableStructs = append(tableStructs, *tableStruct)
 	}
+	// отправляем в шаблон
 	sendToTemplate(&tableStructs)
 	return nil
 }

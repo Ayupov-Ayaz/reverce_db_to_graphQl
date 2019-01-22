@@ -3,8 +3,12 @@ package reverser
 import (
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/db"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/model"
+	"log"
 )
 
+/**
+	Получение структуры таблицы в базе данных
+ */
 func getTableStruct(tableName string, db *db.DB)  (table *model.Table, err error) {
 
 	fields := &[]model.Field{}
@@ -46,4 +50,38 @@ func getTableStruct(tableName string, db *db.DB)  (table *model.Table, err error
 	}
 
 	return t, nil
+}
+
+/**
+	Получение внешних ключей таблицы
+ */
+func GetForeignKeys(tableName string, db *db.DB) *[]model.ForeignKey {
+
+	foreignKeyses := &[]model.ForeignKey{}
+
+	query := `
+	select
+       col.name 			as field_name
+       ,tab_prim.name 		as fk_to_table
+       ,col_prim.name 		as pk_field
+	
+	from sys.tables as tab
+       inner join sys.foreign_keys as fk
+                  on tab.object_id = fk.parent_object_id
+       inner join sys.foreign_key_columns as fkc
+                  on fk.object_id = fkc.constraint_object_id
+       inner join sys.columns as col
+                  on fkc.parent_object_id = col.object_id
+                  and fkc.parent_column_id = col.column_id
+       inner join sys.columns as col_prim
+                  on fkc.referenced_object_id = col_prim.object_id
+                  and fkc.referenced_column_id = col_prim.column_id
+       inner join sys.tables as tab_prim
+                  on fk.referenced_object_id = tab_prim.object_id
+	where tab.name= ?
+	`
+	if err := db.Select(foreignKeyses, query, tableName); err != nil {
+		log.Printf("| ERROR | GetForeignKeys( %s ) : \n %s \n", tableName, err.Error())
+	}
+	return foreignKeyses
 }
