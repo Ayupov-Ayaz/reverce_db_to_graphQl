@@ -36,6 +36,9 @@ func (r *Reverser) Reverse(db *db.DB) error {
 		tableStructs = append(tableStructs, tableStruct)
 	}
 
+	// смотрим на влешние ключи таблиц
+	SendForeignTypes(tableStructs)
+
 	// отправляем в шаблон
 	sendToTemplate(tableStructs)
 	return nil
@@ -68,4 +71,26 @@ func sendToTemplate(tables []*model.Table) {
 		}
 	}
 
+}
+
+/**
+	Для полей с внешними ключами проставляем специальный тип
+ */
+func SendForeignTypes(tables []*model.Table) {
+	// пробегаем по всем табличкам
+	for _, table := range tables {
+		// если есть внешние ключи
+		if len(table.ForeignKeys) > 0 {
+			// пробегаем по полям у которых эти внешние ключи есть
+			for _, fk_field := range table.ForeignKeys {
+				// ищем поле в котором есть этот внешний ключ
+				for _, field := range table.Fields {
+					if field.Name == fk_field.FieldName {
+						// добавляем для поля дополнительный тип который указывает на другую таблицу
+						field.FkType = &fk_field.FkToTable
+					}
+				}
+			}
+		}
+	}
 }
