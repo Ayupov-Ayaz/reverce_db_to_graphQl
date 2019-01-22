@@ -42,15 +42,16 @@ func (f *Field) GetGraphQlType() string {
 	case "float": 	 return "Float"
 	case "tinyint":  return "Boolean"
 	case "numeric":  return "Int"
+	case "char":	 return "String"
 	default:
-		log.Printf("\n| ERROR | Не указан преобразователь типа для %s \n", f.Type)
+		log.Printf("\n| ERROR | Не указан преобразователь типа для %s, тип найден у поля %s\n", f.Type, f.Name)
 		return f.Type
 	}
 }
 
 func (f *Field) GetValidate() string {
 	if f.MaxLength != 0 {
-		return "max:" + strconv.Itoa(f.MaxLength)
+		return "@validate(max:" + strconv.Itoa(f.MaxLength)+")"
 	}
 	return ""
 }
