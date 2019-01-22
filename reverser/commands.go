@@ -15,7 +15,7 @@ func getTableStruct(tableName string, db *db.DB)  (table *model.Table, err error
 	}
 
 	query := `
-			 select
+			 select distinct 
 			 ISC.COLUMN_NAME                               as name
 			 ,ISC.DATA_TYPE   							   as type
 			 ,isnull(ISC.CHARACTER_MAXIMUM_LENGTH, 0)      as max_length
@@ -31,9 +31,9 @@ func getTableStruct(tableName string, db *db.DB)  (table *model.Table, err error
 			 	   and  ISKCU.TABLE_CATALOG = ISC.TABLE_CATALOG
 			 	   and  ISKCU.TABLE_SCHEMA = ISC.TABLE_SCHEMA
 			 
-			 where ISC.TABLE_NAME = 'tc_trip' `
+			 where ISC.TABLE_NAME = ? `
 
-	if  err := db.Select(fields, query); err != nil {
+	if  err := db.Select(fields, query, tableName); err != nil {
 		return nil, err
 	}
 
