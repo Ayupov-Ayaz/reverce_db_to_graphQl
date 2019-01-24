@@ -14,33 +14,32 @@ func getTableStruct(tableName string, db *db.DB)  (table *model.Table, err error
 	fields := []*model.Field{}
 
 	query := `
+		declare @table_name varchar(255) = ?
 		select distinct
-     		t_c.COLUMN_NAME                             					    as name
-     		, t_c.DATA_TYPE                                                     as type
-     		, isnull(t_c.CHARACTER_MAXIMUM_LENGTH, 0)					        as max_length
-     		, case when lower(t_c.IS_NULLABLE) = 'yes'    then  1 else 0 end    as is_nullable	  
-     		, case when p_keys.CONSTRAINT_TYPE is not null then 1 else 0 end    as is_primary
-     		, case when f_keys.CONSTRAINT_TYPE is not null then 1 else 0 end    as is_foreign
-        
-		from INFORMATION_SCHEMA.COLUMNS									as  t_c
-        
-			left join INFORMATION_SCHEMA.KEY_COLUMN_USAGE				as all_keys
-         		on all_keys.TABLE_NAME = t_c.TABLE_NAME 
-         		and t_c.COLUMN_NAME    = all_keys.COLUMN_NAME
-		  
-			left join INFORMATION_SCHEMA.TABLE_CONSTRAINTS				as p_keys 
-         		on p_keys.TABLE_NAME 	    = all_keys.TABLE_NAME
-          		and p_keys.CONSTRAINT_NAME = all_keys.CONSTRAINT_NAME
-          		and p_keys.CONSTRAINT_TYPE = 'PRIMARY KEY'
-          
-			left join INFORMATION_SCHEMA.TABLE_CONSTRAINTS 				as f_keys 
-        		on f_keys.TABLE_NAME 		= all_keys.TABLE_NAME
-          		and f_keys.CONSTRAINT_NAME = all_keys.CONSTRAINT_NAME
-          		and f_keys.CONSTRAINT_TYPE = 'FOREIGN KEY'
-	    
-		where t_c.TABLE_NAME = ? `
+	  		t_c.COLUMN_NAME                             					    as name
+			, t_c.DATA_TYPE                                                     as type
+			, MAX(isnull(t_c.CHARACTER_MAXIMUM_LENGTH, 0))						as max_length
+			, MAX(case when lower(t_c.IS_NULLABLE) = 'yes' then 1 else 0 end)	as is_nullable
+  			, MAX(isnull(s.is_unique, 0) )										as is_unique
+  			, MAX(isnull(s.is_foreign, 0)) 										as is_foreign
+  			, MAX(isnull(s.is_primary, 0)) 										as is_primary
+	from INFORMATION_SCHEMA.COLUMNS												as t_c
+	left join INFORMATION_SCHEMA.KEY_COLUMN_USAGE								as all_keys
+	                 on all_keys.TABLE_NAME = t_c.TABLE_NAME
+	                 and t_c.COLUMN_NAME = all_keys.COLUMN_NAME
+	left join (
+		select CONSTRAINT_NAME as keys
+			, case when CONSTRAINT_TYPE = 'UNIQUE'      then 1 else 0 end 		as is_unique
+			, case when CONSTRAINT_TYPE = 'FOREIGN KEY' then 1 else 0 end 		as is_foreign
+			, case when CONSTRAINT_TYPE = 'PRIMARY KEY' then 1 else 0 end 		as is_primary
+		from INFORMATION_SCHEMA.TABLE_CONSTRAINTS as  f_key 
+		where TABLE_NAME = @table_name
+	) as s ON s.keys = all_keys.CONSTRAINT_NAME
+	where t_c.TABLE_NAME = @table_name 
+	group by  t_c.COLUMN_NAME, t_c.DATA_TYPE`
 
 	if  err := db.Select(&fields, query, tableName); err != nil {
+		log.Printf("|=> ERROR | %s \n", err.Error())
 		return nil, err
 	}
 	t := &model.Table{

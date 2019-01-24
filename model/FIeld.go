@@ -11,6 +11,7 @@ type Field struct {
 	IsPrimary bool `db:"is_primary"`
 	IsForeign bool `db:"is_foreign"`
 	IsNullable bool `db:"is_nullable"`
+	IsUnique bool `db:"is_unique"`
 	MaxLength int `db:"max_length"`
 	FkType *string
 }
