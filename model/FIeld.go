@@ -13,7 +13,7 @@ type Field struct {
 	IsNullable bool `db:"is_nullable"`
 	IsUnique bool `db:"is_unique"`
 	MaxLength int `db:"max_length"`
-	FkType *string
+	FkType string
 }
 
 func (f *Field) IsPrimaryKey() string {

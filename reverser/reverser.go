@@ -41,6 +41,12 @@ func (r *Reverser) Reverse(db *db.DB) error {
 	relations := DefiningTableRelations(tableStructs)
 	fmt.Println(relations)
 
+	tableCollection := make(map[string]*model.Table)
+	for _, modelTable := range tableStructs{
+		tableCollection[modelTable.Name] = modelTable
+	}
+
+	SpecialTypeDefinition(tableCollection, relations)
 	// отправляем в шаблон
 	sendToTemplate(tableStructs)
 	return nil
@@ -60,7 +66,7 @@ func sendToTemplate(tables []*model.Table) {
 	t, err := template.New("tables").Funcs(funcMap).Parse(getTemplateStruct())
 	if err != nil { panic(err) }
 	for _,table := range tables {
-		fileName := "results/" + table.Name + ".graphQl"
+		fileName := "results/" + table.Name + ".graphql"
 		fo, err := os.Create(fileName)
 		if err != nil {log.Printf("| ERROR | Не удалось открыть файл %s, \n", fileName)}
 
@@ -115,3 +121,55 @@ func DefiningTableRelations(tables []*model.Table) map[string]*model.Relation{
 	return tableRelation
 }
 
+func SpecialTypeDefinition(tables map[string]*model.Table, relations map[string]*model.Relation)  {
+	// пробегаем по всем табличкам
+	for tableName, table := range tables {
+		// если есть внешние ключи
+		if len(table.ForeignKeys) > 0 {
+			relLinkedTo := relations[table.Name].LinkedTo
+			// пробегаем по всем таблицам к которым ссылается наша таблица
+			for toTable, keyMap := range relLinkedTo {
+				// определяем отношения
+				for _, field := range table.Fields {
+					if field.Name == keyMap["fk"] {
+						/* 1. Один к одному:
+							Если f_key по нашей табличке(table.Name) уникальное и у таблицы к которой у нас отношение(toTable)
+							есть отношение  к нашей таблице и ее поле f_key тоже уникальное
+						 */
+						if field.IsUnique {
+							// получаем таблицу к которой у нас отношение
+							if linkTable, ok := tables[toTable]; ok {
+								if len(linkTable.ForeignKeys) > 0 {
+									if self, ok := relations[toTable]; ok {
+										if inversRel, foundInverseRelation := self.LinkedTo[tableName];
+										foundInverseRelation {
+											for _, inverseTableField := range tables[toTable].Fields {
+												if inversRel["fk"] == inverseTableField.Name {
+													if inverseTableField.IsUnique {
+														// 1 к 1
+														field.FkType = toTable
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+						/** 2. Один ко многим:
+							 Если f_key по нашей таблице(table.Name) уникальное, а таблица к которой мы ссылкаемся(toTable)
+							не ссылается на нас
+						 */
+
+						/* 3. Многие ко многим:
+							Если f_key по нашей таблице(table.Name) не уникальное и таблица к которой мы ссылаемся(toTable)
+							сама не ссылается никуда, когда на нее ссылаются  2 или более таблиц
+						*/
+
+
+					}
+				}
+			}
+		}
+	}
+}
