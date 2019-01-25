@@ -1,6 +1,7 @@
 package reverser
 
 import (
+	"fmt"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/db"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/model"
 	"html/template"
@@ -88,12 +89,23 @@ func SendForeignTypes(tables []*model.Table) {
 				// ищем поле в котором есть этот внешний ключ
 				for _, field := range table.Fields {
 					if field.Name == fk_field.FieldName {
+
+						// relation
 						relation, ok := tableRelation[table.Name]
 						if !ok{
 							relation = &model.Relation{}
 							tableRelation[table.Name] = relation
 						}
 						relation.AddLinkedTo(fk_field.FkToTable, fk_field.FieldName, fk_field.PkField)
+
+						// inverseRelation
+						inverseRelation, ok := tableRelation[fk_field.FkToTable]
+						if !ok{
+							inverseRelation = &model.Relation{}
+							tableRelation[fk_field.FkToTable] = inverseRelation
+						}
+						inverseRelation.AddLinkToMe(table.Name, fk_field.FieldName, fk_field.PkField)
+
 						// добавляем для поля дополнительный тип который указывает на другую таблицу
 						field.FkType = &fk_field.FkToTable
 					}
