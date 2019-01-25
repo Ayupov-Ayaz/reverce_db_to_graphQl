@@ -123,47 +123,80 @@ func SpecialTypeDefinition(tables map[string]*model.Table, relations map[string]
 	for tableName, table := range tables {
 		// если есть внешние ключи
 		if len(table.ForeignKeys) > 0 {
+			// получаем все отношения для нашей таблицы
 			relLinkedTo := relations[table.Name].LinkedTo
-			// пробегаем по всем таблицам к которым ссылается наша таблица
+			// пробегаем по отношениям таблиц к которым ссылается наша таблица
 			for toTable, keyMap := range relLinkedTo {
-				// определяем отношения
-				for _, field := range table.Fields {
+				// пробегаем по всем полям которые ссылаются на другие таблицы
+				for _, field := range table.ForeignFields {
 					if field.Name == keyMap["fk"] {
 						/* 1. Один к одному:
 							Если f_key по нашей табличке(table.Name) уникальное и у таблицы к которой у нас отношение(toTable)
 							есть отношение  к нашей таблице и ее поле f_key тоже уникальное
-						 */
-						if field.IsUnique {
-							// получаем таблицу к которой у нас отношение
-							if linkTable, ok := tables[toTable]; ok {
-								if len(linkTable.ForeignKeys) > 0 {
-									if self, ok := relations[toTable]; ok {
-										if inversRel, foundInverseRelation := self.LinkedTo[tableName];
-										foundInverseRelation {
-											for _, inverseTableField := range tables[toTable].Fields {
-												if inversRel["fk"] == inverseTableField.Name {
-													if inverseTableField.IsUnique {
-														// 1 к 1
-														field.FkType = toTable
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-						/** 2. Один ко многим:
-							 Если f_key по нашей таблице(table.Name) уникальное, а таблица к которой мы ссылкаемся(toTable)
-							не ссылается на нас
-						 */
 
-						/* 3. Многие ко многим:
-							Если f_key по нашей таблице(table.Name) не уникальное и таблица к которой мы ссылаемся(toTable)
-							сама не ссылается никуда, когда на нее ссылаются  2 или более таблиц
+						  2. Один ко многим:
+							Если f_key по нашей таблице(table.Name) уникальное, а таблица к которой мы ссылкаемся(toTable)
+						   не ссылается на нас
 						*/
 
+						// получаем таблицу к которой у нас отношение
+						if linkTable, ok := tables[toTable]; ok {
+							if len(linkTable.ForeignKeys) > 0 {
+								if self, ok := relations[toTable]; ok {
+									// ищем обратные отношения
+									if inverseRel, foundInverseRelation := self.LinkedTo[tableName];
+									foundInverseRelation {
+										for _, inverseTableField := range tables[toTable].ForeignFields {
+											if inverseRel["fk"] == inverseTableField.Name {
+												if field.IsUnique && inverseTableField.IsUnique {
+													field.FkType = toTable  // OneToOne
+												} else if field.IsUnique && !inverseTableField.IsUnique {
+													field.FkType = "[" + toTable + "]" // OneToMany
+												} else if !field.IsUnique && inverseTableField.IsUnique {
+													field.FkType = toTable // ManyToOne
+												} else {
+													field.FkType = "[" + toTable +"]"
+												}
+											} else {
+												fmt.Printf("Для строки %s по таблице %s не найдены отношения \n",
+													inverseTableField, toTable)
+											}
+										}
+									} else {
+										// Если нету обратных отношений
+										if field.IsUnique {
+											field.FkType = toTable // OneToMany
+										} else {
+											/* 3. Многие ко многим:
+											Если f_key по нашей таблице(table.Name) не уникальное и таблица к которой мы ссылаемся(toTable)
+											сама не ссылается никуда
+										*/
+											field.FkType = "[" + toTable + "]" // ManyToMany
+										}
+									}
+								} else {
+									log.Printf("| ERROR | По таблице %s, не найдены отношения \n", toTable)
+								}
+							} else {
+								// Отношений у таблицы нету.
+								if field.IsUnique {
+									field.FkType = toTable
+								} else {
+									field.FkType = "[" + toTable + "]"
+								}
+							}
+						} else {
+							relationError := "Не удалось определить отношение %s => %s"
+							tableNotFound := relationError + ", Таблица '%s' не была указана \n"
+							relationError2 := relationError + ", Причина не ясна =( "
+							if _, tableExist := tables[toTable]; !tableExist {
+								log.Printf(tableNotFound, tableName, toTable, toTable)
+								field.FkType = "NO_TABLE_SPECIFIED"
+							} else {
+								log.Printf( relationError2)
+							}
 
+						}
 					}
 				}
 			}
