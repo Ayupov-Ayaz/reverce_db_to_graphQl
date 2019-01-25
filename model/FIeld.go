@@ -40,6 +40,14 @@ func (f *Field) GetGraphQlType() string {
 	case "tinyint":  return "Boolean"
 	case "numeric":  return "Int"
 	case "char":	 return "String"
+	case "bit":		 return "Boolean"
+	case "bigint":	 return "Int"
+	case "nchar":	 return "String"
+	case "nvarchar": return "String"
+	case "time":	 return "Time"
+	case "real":	 return "Int"
+
+
 	default:
 		log.Printf("\n| ERROR | Не указан преобразователь типа для %s, тип найден у поля %s\n", f.Type, f.Name)
 		return f.Type
