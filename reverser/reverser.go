@@ -77,6 +77,8 @@ func sendToTemplate(tables []*model.Table) {
 	Для полей с внешними ключами проставляем специальный тип
  */
 func SendForeignTypes(tables []*model.Table) {
+
+	tableRelation := make(map[string]*model.Relation)
 	// пробегаем по всем табличкам
 	for _, table := range tables {
 		// если есть внешние ключи
@@ -86,6 +88,12 @@ func SendForeignTypes(tables []*model.Table) {
 				// ищем поле в котором есть этот внешний ключ
 				for _, field := range table.Fields {
 					if field.Name == fk_field.FieldName {
+						relation, ok := tableRelation[table.Name]
+						if !ok{
+							relation = &model.Relation{}
+							tableRelation[table.Name] = relation
+						}
+						relation.AddLinkedTo(fk_field.FkToTable, fk_field.FieldName, fk_field.PkField)
 						// добавляем для поля дополнительный тип который указывает на другую таблицу
 						field.FkType = &fk_field.FkToTable
 					}
@@ -93,4 +101,6 @@ func SendForeignTypes(tables []*model.Table) {
 			}
 		}
 	}
+
 }
+
