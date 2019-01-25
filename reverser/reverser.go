@@ -193,7 +193,7 @@ func SpecialTypeDefinition(tables map[string]*model.Table, relations map[string]
 								log.Printf(tableNotFound, tableName, toTable, toTable)
 								field.FkType = "NO_TABLE_SPECIFIED"
 							} else {
-								log.Printf( relationError2)
+								log.Printf(relationError2)
 							}
 
 						}
@@ -219,4 +219,19 @@ func makeTableCollection(tablesSlice []*model.Table) map[string]*model.Table{
 		}
 	}
 	return tableCollection
+}
+
+// Функция которая проверяет значение isNullable по полю внешнему ключу таблицы
+func getNullSign(tables map[string]*model.Table ,tableName, fkName string) string {
+	if table, ok := tables[tableName]; ok {
+		for _, field := range table.ForeignFields {
+			if field.IsNullable {
+				return "!"
+			} else {
+				return ""
+			}
+		}
+	}
+	fmt.Printf("|ERROR| Не задана таблица %s, не удалось проверить на NULL поле %s ", tableName, fkName)
+	return "|ERROR|"
 }
