@@ -41,10 +41,7 @@ func (r *Reverser) Reverse(db *db.DB) error {
 	relations := DefiningTableRelations(tableStructs)
 	fmt.Println(relations)
 
-	tableCollection := make(map[string]*model.Table)
-	for _, modelTable := range tableStructs{
-		tableCollection[modelTable.Name] = modelTable
-	}
+	tableCollection := makeTableCollection(tableStructs)
 
 	SpecialTypeDefinition(tableCollection, relations)
 	// отправляем в шаблон
@@ -172,4 +169,21 @@ func SpecialTypeDefinition(tables map[string]*model.Table, relations map[string]
 			}
 		}
 	}
+}
+
+func makeTableCollection(tablesSlice []*model.Table) map[string]*model.Table{
+	tableCollection := make(map[string]*model.Table)
+	for _, modelTable := range tablesSlice {
+		tableCollection[modelTable.Name] = modelTable
+		if len(modelTable.ForeignKeys) > 0 {
+			foreignFields := make(map[string]*model.Field)
+			for _, field := range modelTable.Fields {
+				if field.IsForeign {
+					foreignFields[field.Name] = field
+				}
+			}
+			modelTable.ForeignFields = foreignFields
+		}
+	}
+	return tableCollection
 }
