@@ -37,8 +37,9 @@ func (r *Reverser) Reverse(db *db.DB) error {
 		tableStructs = append(tableStructs, tableStruct)
 	}
 
-	// смотрим на влешние ключи таблиц
-	SendForeignTypes(tableStructs)
+	// Создаем карту отношений таблиц
+	relations := DefiningTableRelations(tableStructs)
+	fmt.Println(relations)
 
 	// отправляем в шаблон
 	sendToTemplate(tableStructs)
@@ -75,9 +76,9 @@ func sendToTemplate(tables []*model.Table) {
 }
 
 /**
-	Для полей с внешними ключами проставляем специальный тип
+	Просматривает все таблички и создает карту отношений таблиц друг к другу
  */
-func SendForeignTypes(tables []*model.Table) {
+func DefiningTableRelations(tables []*model.Table) map[string]*model.Relation{
 
 	tableRelation := make(map[string]*model.Relation)
 	// пробегаем по всем табличкам
@@ -105,14 +106,12 @@ func SendForeignTypes(tables []*model.Table) {
 							tableRelation[fk_field.FkToTable] = inverseRelation
 						}
 						inverseRelation.AddLinkToMe(table.Name, fk_field.FieldName, fk_field.PkField)
-
-						// добавляем для поля дополнительный тип который указывает на другую таблицу
-						field.FkType = &fk_field.FkToTable
+						
 					}
 				}
 			}
 		}
 	}
-
+	return tableRelation
 }
 
