@@ -55,7 +55,7 @@ func (f *Field) GetGraphQlType() string {
 }
 
 func GetForeignType(f *Field)  string {
-	return "// TODO:Foreign "
+	return f.FkType
 }
 
 func (f *Field) GetValidate() string {
