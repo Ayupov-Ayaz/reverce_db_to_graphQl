@@ -22,6 +22,13 @@ func NewReverser(tables *[]string) *Reverser {
 	}
 }
 
+/**
+	Функция которая запускает процессы:
+	1) сборку данных из бд по таблицам
+	2) получение из бд внешних ключей таблиц
+	3) создание карты отношений между таблицами
+	4) выгрузка в шаблон результатов
+ */
 func (r *Reverser) Reverse(db *db.DB) error {
 	var tableStructs = make([]*model.Table, 0)
 
@@ -49,6 +56,9 @@ func (r *Reverser) Reverse(db *db.DB) error {
 	return nil
 }
 
+/**
+	Выгружает данные в шаблон и создает в папке results graphql структуры
+ */
 func sendToTemplate(tables []*model.Table) {
 
 	field := model.Field{}
@@ -118,6 +128,9 @@ func DefiningTableRelations(tables []*model.Table) map[string]*model.Relation{
 	return tableRelation
 }
 
+/**
+	Определение специальных типов у полей исходя из внешних ключей к таблицам которым они относятся
+ */
 func SpecialTypeDefinition(tables map[string]*model.Table, relations map[string]*model.Relation)  {
 	// пробегаем по всем табличкам
 	for tableName, table := range tables {
@@ -151,11 +164,11 @@ func SpecialTypeDefinition(tables map[string]*model.Table, relations map[string]
 												if field.IsUnique && inverseTableField.IsUnique {
 													field.FkType = toTable  // OneToOne
 												} else if field.IsUnique && !inverseTableField.IsUnique {
-													field.FkType = "[" + toTable + "]" // OneToMany
+													field.FkType = "[" + toTable + getNullSign(tables, tableName, field.Name) + "]" // OneToMany
 												} else if !field.IsUnique && inverseTableField.IsUnique {
 													field.FkType = toTable // ManyToOne
 												} else {
-													field.FkType = "[" + toTable +"]"
+													field.FkType = "[" + toTable + getNullSign(tables, tableName, field.Name) + "]"
 												}
 											} else {
 												fmt.Printf("Для строки %s по таблице %s не найдены отношения \n",
@@ -163,7 +176,7 @@ func SpecialTypeDefinition(tables map[string]*model.Table, relations map[string]
 											}
 										}
 									} else {
-										// Если нету обратных отношений
+										// Если нету обратных отношений (например, главная таблица, к которой все ссылаются)
 										if field.IsUnique {
 											field.FkType = toTable // OneToMany
 										} else {
@@ -171,7 +184,7 @@ func SpecialTypeDefinition(tables map[string]*model.Table, relations map[string]
 											Если f_key по нашей таблице(table.Name) не уникальное и таблица к которой мы ссылаемся(toTable)
 											сама не ссылается никуда
 										*/
-											field.FkType = "[" + toTable + "]" // ManyToMany
+											field.FkType = "[" + toTable + getNullSign(tables, tableName, field.Name) + "]" // ManyToMany
 										}
 									}
 								} else {
@@ -182,20 +195,19 @@ func SpecialTypeDefinition(tables map[string]*model.Table, relations map[string]
 								if field.IsUnique {
 									field.FkType = toTable
 								} else {
-									field.FkType = "[" + toTable + "]"
+									field.FkType = "[" + toTable +   getNullSign(tables, tableName, field.Name) + "]"
 								}
 							}
 						} else {
-							relationError := "Не удалось определить отношение %s => %s"
+							relationError := "Не удалось определить отношение %s.%s => %s (для поля %s прописан тип NO_TABLE_SPECIFIED)"
 							tableNotFound := relationError + ", Таблица '%s' не была указана \n"
 							relationError2 := relationError + ", Причина не ясна =( "
 							if _, tableExist := tables[toTable]; !tableExist {
-								log.Printf(tableNotFound, tableName, toTable, toTable)
+								log.Printf(tableNotFound, tableName, field.Name, toTable, field.Name, toTable)
 								field.FkType = "NO_TABLE_SPECIFIED"
 							} else {
 								log.Printf(relationError2)
 							}
-
 						}
 					}
 				}
@@ -204,6 +216,7 @@ func SpecialTypeDefinition(tables map[string]*model.Table, relations map[string]
 	}
 }
 
+// Преобразует slice таблиц в карту таблиц, где ключом является имя таблицы
 func makeTableCollection(tablesSlice []*model.Table) map[string]*model.Table{
 	tableCollection := make(map[string]*model.Table)
 	for _, modelTable := range tablesSlice {
@@ -225,13 +238,13 @@ func makeTableCollection(tablesSlice []*model.Table) map[string]*model.Table{
 func getNullSign(tables map[string]*model.Table ,tableName, fkName string) string {
 	if table, ok := tables[tableName]; ok {
 		for _, field := range table.ForeignFields {
-			if field.IsNullable {
+			if !field.IsNullable {
 				return "!"
 			} else {
 				return ""
 			}
 		}
 	}
-	fmt.Printf("|ERROR| Не задана таблица %s, не удалось проверить на NULL поле %s ", tableName, fkName)
+	fmt.Printf("|ERROR| Не задана таблица %s, не удалось проверить на \"nullable\" поле %s ", tableName, fkName)
 	return "|ERROR|"
 }
