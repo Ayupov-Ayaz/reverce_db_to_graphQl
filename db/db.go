@@ -13,6 +13,10 @@ type DB struct {
 	*sqlx.DB
 }
 
+type Params struct {
+	Version string `db:"product_version"`
+	Level string `db:"product_level"`
+}
 
 func InitDB(cfg *Config) (*DB, error){
 	var dsn string
