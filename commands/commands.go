@@ -11,6 +11,7 @@ import (
 type DbCommander interface {
 	GetTableStruct(tableName string, db *db.DB) (table *model.Table)
 	GetForeignKeys(tableName string, db *db.DB) []*model.ForeignKey
+	db.Paramser
 }
 
 func GetDbCommander(cfg *db.Config) DbCommander{

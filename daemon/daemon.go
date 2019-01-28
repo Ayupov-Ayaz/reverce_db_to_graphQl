@@ -22,5 +22,8 @@ func Run(cfg *Config, tables *[]string) {
 	// scanning
 	rev := reverser.NewReverser( tables)
 	com := commands.GetDbCommander(cfg.Db)
-	rev.Reverse(db, com)
+
+	if db.CompareDbParams(com) {
+		rev.Reverse(db, com)
+	}
 }
