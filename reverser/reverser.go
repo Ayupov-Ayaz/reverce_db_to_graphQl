@@ -34,11 +34,8 @@ func (r *Reverser) Reverse(db *db.DB) error {
 
 	// Получаем структуры таблиц
 	for _, table := range r.Tables {
-		tableStruct, err := getTableStruct(table, db)
-		if err != nil {
-			panic(err)
-		}
-		if len(tableStruct.Fields) > 0 {
+		tableStruct := getTableStruct(table, db)
+		if tableStruct != nil && len(tableStruct.Fields) > 0 {
 			// достаем внешние ключи
 			tableStruct.ForeignKeys = GetForeignKeys(table, db)
 			tableStructs = append(tableStructs, tableStruct)
@@ -49,6 +46,10 @@ func (r *Reverser) Reverse(db *db.DB) error {
 		deleteNotFoundTables(r.Tables, tableStructs)
 	}
 
+	if len(tableStructs) == 0 {
+		log.Println("| ERROR | Все таблицы которые вы указали, не были найдены в бд. Проверьте названия таблиц.")
+		os.Exit(-1)
+	}
 	// Создаем карту отношений таблиц
 	relations := DefiningTableRelations(tableStructs)
 
@@ -75,18 +76,26 @@ func sendToTemplate(tables []*model.Table) {
 	}
 
 	t, err := template.New("tables").Funcs(funcMap).Parse(getTemplateStruct())
-	if err != nil { panic(err) }
+	if err != nil {
+		log.Printf("| SYS.ERROR | Не удалось создать шаблон \n")
+		panic(err)
+	}
 	for _,table := range tables {
 		fileName := "results/" + table.Name + ".graphql"
 		fo, err := os.Create(fileName)
-		if err != nil {log.Printf("| ERROR | Не удалось открыть файл %s, \n", fileName)}
-
-		defer func() {
-			if err := fo.Close(); err != nil {log.Printf("| ERROR | Не удалось закрыть файл %s \n", fileName)}
-		}()
+		if err != nil {
+			log.Printf("| SYS.ERROR | Не удалось открыть файл %s, \n", fileName)
+			panic(err)
+		}
 
 		if err := t.Execute(fo, table); err != nil {
+			log.Printf("| SYS.ERROR | При попытке записать в файл %s структуру таблицы %s произошла ошибка:\n",
+			fileName, table.Name)
 			panic(err)
+		}
+
+		if err := fo.Close(); err != nil {
+			log.Printf("| SYS.ERROR | Не удалось закрыть файл %s \n", fileName)
 		}
 	}
 
@@ -148,12 +157,12 @@ func SpecialTypeDefinition(tables map[string]*model.Table, relations map[string]
 				for _, field := range table.ForeignFields {
 					if field.Name == keyMap["fk"] {
 						/* 1. Один к одному:
-							Если f_key по нашей табличке(table.Name) уникальное и у таблицы к которой у нас отношение(toTable)
-							есть отношение  к нашей таблице и ее поле f_key тоже уникальное
+							Если f_key по нашей табличке(table.Name) уникальное и у таблицы к которой у нас
+							отношение(toTable) есть обратное отношение к нашей таблице, и ее поле f_key тоже уникальное
 
 						  2. Один ко многим:
-							Если f_key по нашей таблице(table.Name) уникальное, а таблица к которой мы ссылкаемся(toTable)
-						   не ссылается на нас
+							Если f_key по нашей таблице(table.Name) уникальное, а таблица к которой мы
+							ссылкаемся(toTable) не ссылается на нас
 						*/
 
 						// получаем таблицу к которой у нас отношение
@@ -168,27 +177,32 @@ func SpecialTypeDefinition(tables map[string]*model.Table, relations map[string]
 												if field.IsUnique && inverseTableField.IsUnique {
 													field.FkType = toTable  // OneToOne
 												} else if field.IsUnique && !inverseTableField.IsUnique {
-													field.FkType = "[" + toTable + getNullSign(tables, tableName, field.Name) + "]" // OneToMany
+													field.FkType = "[" + toTable + getNullSign(tables,
+														tableName, field.Name) + "]" // OneToMany
 												} else if !field.IsUnique && inverseTableField.IsUnique {
 													field.FkType = toTable // ManyToOne
 												} else {
-													field.FkType = "[" + toTable + getNullSign(tables, tableName, field.Name) + "]"
+													field.FkType = "[" + toTable + getNullSign(tables,
+														tableName, field.Name) + "]"
 												}
 											} else {
-												fmt.Printf("Для строки %s по таблице %s не найдены отношения \n",
-													inverseTableField, toTable)
+												err := "| NOTICE | Для строки %s.%s не найдены внешние ключи." +
+													"Постройте отношение в ручную для поля %s.%s\n"
+												fmt.Printf(err , toTable, inverseTableField.Name, table.Name, field.Name)
 											}
 										}
 									} else {
-										// Если нету обратных отношений (например, главная таблица, к которой все ссылаются)
+										// Если нету обратных отношений (например, главная таблица,
+										// к которой все ссылаются)
 										if field.IsUnique {
 											field.FkType = toTable // OneToMany
 										} else {
 											/* 3. Многие ко многим:
-											Если f_key по нашей таблице(table.Name) не уникальное и таблица к которой мы ссылаемся(toTable)
-											сама не ссылается никуда
+											Если f_key по нашей таблице(table.Name) не уникальное и таблица к которой
+											мы ссылаемся(toTable) сама не ссылается никуда
 										*/
-											field.FkType = "[" + toTable + getNullSign(tables, tableName, field.Name) + "]" // ManyToMany
+											field.FkType = "[" + toTable + getNullSign(tables,
+												tableName, field.Name) + "]" // ManyToMany
 										}
 									}
 								} else {
@@ -203,15 +217,16 @@ func SpecialTypeDefinition(tables map[string]*model.Table, relations map[string]
 								}
 							}
 						} else {
-							relationError := "Не удалось определить отношение %s.%s => %s (для поля %s прописан тип NO_TABLE_SPECIFIED)"
+							relationError := "| NOTICE | Не удалось определить отношение %s.%s => %s " +
+								"(для поля %s прописан тип NO_TABLE_SPECIFIED)"
 							tableNotFound := relationError + ", Таблица '%s' не была указана \n"
 							relationError2 := relationError + ", Причина не ясна =( "
 							if _, tableExist := tables[toTable]; !tableExist {
 								log.Printf(tableNotFound, tableName, field.Name, toTable, field.Name, toTable)
-								field.FkType = "NO_TABLE_SPECIFIED"
 							} else {
-								log.Printf(relationError2)
+								log.Printf(relationError2, tableName, field.Name, toTable, field.Name)
 							}
+							field.FkType = "NO_TABLE_SPECIFIED"
 						}
 					}
 				}
@@ -238,7 +253,7 @@ func makeTableCollection(tablesSlice []*model.Table) map[string]*model.Table{
 	return tableCollection
 }
 
-// Функция которая проверяет значение isNullable по полю внешнему ключу таблицы
+// Функция которая проверяет значение isNullable по полю внешнего ключа таблицы
 func getNullSign(tables map[string]*model.Table ,tableName, fkName string) string {
 	if table, ok := tables[tableName]; ok {
 		for _, field := range table.ForeignFields {
@@ -249,8 +264,8 @@ func getNullSign(tables map[string]*model.Table ,tableName, fkName string) strin
 			}
 		}
 	}
-	fmt.Printf("|ERROR| Не задана таблица %s, не удалось проверить на \"nullable\" поле %s ", tableName, fkName)
-	return "|ERROR|"
+	fmt.Printf("| NOTICE | Не задана таблица %s, не удалось проверить на \"nullable\" поле %s ", tableName, fkName)
+	return "NOT_FOUND_TABLE"
 }
 
 /**

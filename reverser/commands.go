@@ -9,7 +9,7 @@ import (
 /**
 	Получение структуры таблицы в базе данных
  */
-func getTableStruct(tableName string, db *db.DB)  (table *model.Table, err error) {
+func getTableStruct(tableName string, db *db.DB)  (table *model.Table) {
 
 	fields := []*model.Field{}
 
@@ -39,14 +39,15 @@ func getTableStruct(tableName string, db *db.DB)  (table *model.Table, err error
 	group by  t_c.COLUMN_NAME, t_c.DATA_TYPE`
 
 	if  err := db.Select(&fields, query, tableName); err != nil {
-		log.Printf("|=> ERROR | %s \n", err.Error())
-		return nil, err
+		log.Printf("| DB.ERROR | Ошибка при получении структуры таблицы = %s :\n %s \n", tableName, err.Error())
+		log.Printf("| NOTICE | Таблица %s пропущена", tableName)
+		return nil
 	}
 	t := &model.Table{
 		Name: tableName,
 		Fields: fields,
 	}
-	return t, nil
+	return t
 }
 
 /**
@@ -78,8 +79,9 @@ func GetForeignKeys(tableName string, db *db.DB) []*model.ForeignKey {
 	where tab.name= ? `
 
 	if err := db.Select(&foreignKeyses, query, tableName); err != nil {
-		log.Printf("| ERROR | GetForeignKeys( %s ) : \n %s \n", tableName, err.Error())
-		panic(err)
+		log.Printf("| DB.ERROR | Ошибка при получение внешних ключей таблицы %s: \n %s \n",
+			tableName, err.Error())
+		log.Printf("| NOTICE | Таблица %s пропущена", tableName)
 	}
 	return foreignKeyses
 }

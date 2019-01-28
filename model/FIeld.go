@@ -49,7 +49,7 @@ func (f *Field) GetGraphQlType() string {
 
 
 	default:
-		log.Printf("\n| ERROR | Не указан преобразователь типа для %s, тип найден у поля %s\n", f.Type, f.Name)
+		log.Printf("| ERROR | Не указан преобразователь типа для %s, тип найден у поля %s\n", f.Type, f.Name)
 		return f.Type
 	}
 }
