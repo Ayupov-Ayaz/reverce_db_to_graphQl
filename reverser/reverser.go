@@ -38,15 +38,19 @@ func (r *Reverser) Reverse(db *db.DB) error {
 		if err != nil {
 			panic(err)
 		}
+		if len(tableStruct.Fields) > 0 {
+			// достаем внешние ключи
+			tableStruct.ForeignKeys = GetForeignKeys(table, db)
+			tableStructs = append(tableStructs, tableStruct)
+		}
+	}
 
-		// достаем внешние ключи
-		tableStruct.ForeignKeys = GetForeignKeys(table, db)
-		tableStructs = append(tableStructs, tableStruct)
+	if len(r.Tables) != len(tableStructs) {
+		deleteNotFoundTables(r.Tables, tableStructs)
 	}
 
 	// Создаем карту отношений таблиц
 	relations := DefiningTableRelations(tableStructs)
-	fmt.Println(relations)
 
 	tableCollection := makeTableCollection(tableStructs)
 
@@ -247,4 +251,27 @@ func getNullSign(tables map[string]*model.Table ,tableName, fkName string) strin
 	}
 	fmt.Printf("|ERROR| Не задана таблица %s, не удалось проверить на \"nullable\" поле %s ", tableName, fkName)
 	return "|ERROR|"
+}
+
+/**
+	Если не найдена какая-нибудь таблица, ищем ее из общего списка, оповещаем пользователя, удаляем из списка,
+	что бы не проводить дальнейшие манипуляции с ней
+ */
+func deleteNotFoundTables(searchingTables []string, tables []*model.Table) []string{
+
+	for i := 0; i < len(searchingTables); {
+		founded := false
+		for j := 0; j < len(tables); j++ {
+			if searchingTables[i] == tables[j].Name {
+				i++
+				founded = true
+				break
+			}
+		}
+		if !founded {
+			log.Printf("| NOTICE | Таблица %s не была найдена в бд. Проверьте название!", searchingTables[i])
+			searchingTables = append(searchingTables[:i], searchingTables[i+1:]...)
+		}
+	}
+	return searchingTables
 }
