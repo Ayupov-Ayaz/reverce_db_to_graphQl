@@ -1,4 +1,4 @@
-package reverser
+package impl
 
 import (
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/db"
@@ -6,10 +6,15 @@ import (
 	"log"
 )
 
+type MssqlCommands struct {}
+
+func NewMssqlCommands() *MssqlCommands {
+	return &MssqlCommands{}
+}
 /**
 	Получение структуры таблицы в базе данных
  */
-func getTableStruct(tableName string, db *db.DB)  (table *model.Table) {
+func (mc *MssqlCommands) GetTableStruct(tableName string, db *db.DB) (table *model.Table) {
 
 	fields := []*model.Field{}
 
@@ -53,7 +58,7 @@ func getTableStruct(tableName string, db *db.DB)  (table *model.Table) {
 /**
 	Получение внешних ключей таблицы
  */
-func GetForeignKeys(tableName string, db *db.DB) []*model.ForeignKey {
+func (mc *MssqlCommands) GetForeignKeys(tableName string, db *db.DB) []*model.ForeignKey {
 
 	foreignKeyses := []*model.ForeignKey{}
 
