@@ -6,10 +6,29 @@ import (
 	"log"
 )
 
-type MssqlCommands struct {}
+type MssqlCommands struct {
+	Params db.Params
+}
 
 func NewMssqlCommands() *MssqlCommands {
-	return &MssqlCommands{}
+	params := db.Params{
+		Version: "10.50.4000.0",
+		Level: "SP2",
+	}
+	return &MssqlCommands{
+		Params: params,
+	}
+}
+
+func (mc *MssqlCommands) GetParams() *db.Params {
+	return &mc.Params
+}
+
+func (mc *MssqlCommands) GetSupportedVersions() []string {
+	return []string{
+		"10.50.4000.1",
+		//
+	}
 }
 /**
 	Получение структуры таблицы в базе данных
