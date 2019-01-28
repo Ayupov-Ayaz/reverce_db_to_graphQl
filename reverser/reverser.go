@@ -2,6 +2,7 @@ package reverser
 
 import (
 	"fmt"
+	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/commands"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/db"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/model"
 	"html/template"
@@ -29,15 +30,15 @@ func NewReverser(tables *[]string) *Reverser {
 	3) создание карты отношений между таблицами
 	4) выгрузка в шаблон результатов
  */
-func (r *Reverser) Reverse(db *db.DB) error {
+func (r *Reverser) Reverse(db *db.DB, com commands.DbCommander) error {
 	var tableStructs = make([]*model.Table, 0)
 
 	// Получаем структуры таблиц
 	for _, table := range r.Tables {
-		tableStruct := getTableStruct(table, db)
+		tableStruct := com.GetTableStruct(table, db)
 		if tableStruct != nil && len(tableStruct.Fields) > 0 {
 			// достаем внешние ключи
-			tableStruct.ForeignKeys = GetForeignKeys(table, db)
+			tableStruct.ForeignKeys = com.GetForeignKeys(table, db)
 			tableStructs = append(tableStructs, tableStruct)
 		}
 	}

@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/commands"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/db"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/reverser"
 	"log"
@@ -17,7 +18,10 @@ func Run(cfg *Config, tables *[]string) error {
 	}
 	// scanning
 	rev := reverser.NewReverser( tables)
-	rev.Reverse(db)
+	com := commands.GetDbCommander(cfg.Db)
+	if err := rev.Reverse(db, com); err != nil {
+		panic(err)
+	}
 
 	return nil
 }
