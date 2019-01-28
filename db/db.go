@@ -62,6 +62,38 @@ func (db *DB) GetParams() *Params{
 	}
 	return p
 }
+
+func (db *DB) CompareDbParams(dbCommands Paramser) bool {
+	realized := dbCommands.GetParams()
+	server_params := db.GetParams()
+	err_message := "| ERROR | Вы используете %s: %s, реализация построена для - \"%s\""
+	ok := true
+	// Проверка версий базы данных
+	if realized.Version != server_params.Version {
+		ok = false
+		// проверка совместимости
+		for _, version := range dbCommands.GetSupportedVersions() {
+			if version == server_params.Version {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			log.Printf(err_message, "версию", server_params.Version, realized.Version)
+		}
+	}
+	// проверка пакета обновлений
+	if realized.Level != server_params.Level {
+		log.Printf(err_message, " пакет обновлений ", server_params.Level, realized.Level)
+		ok = false
+	}
+	if !ok {
+		// TODO: ключ --version || -v
+		log.Printf("Если Вы всё равно желаете запусть программу, передайте ключ \"%s\"", "--version || -v")
+	}
+	return ok
+}
+
 func (db *DB)GetSupportedVersions() []string {
 	return []string{
 		// заглушка
