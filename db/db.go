@@ -2,9 +2,9 @@ package db
 
 import (
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	_ "github.com/denisenkom/go-mssqldb"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 	"log"
 	"os"
 )
@@ -39,7 +39,7 @@ func InitDB(cfg *Config) (*DB, error){
 			cfg.Database,
 		)
 	default:
-		log.Printf("| ERROR | Вы указали не поддерживаемый sql driver: %s", cfg.Driver )
+		log.Printf("| ERROR | Вы указали неподдерживаемый sql driver: %s", cfg.Driver )
 		os.Exit(-1)
 	}
 
@@ -49,4 +49,21 @@ func InitDB(cfg *Config) (*DB, error){
 	}
 	fmt.Println(cfg.Driver, " connected")
 	return &DB{db}, nil
+}
+
+func (db *DB) GetParams() *Params{
+	p := &Params{}
+	query := `
+		SELECT SERVERPROPERTY('ProductVersion') AS product_version
+     	, SERVERPROPERTY('ProductLevel')   AS product_level;
+	`
+	if err := db.Get(p, query); err != nil {
+		log.Printf("| ERROR | %s \n", err.Error())
+	}
+	return p
+}
+func (db *DB)GetSupportedVersions() []string {
+	return []string{
+		// заглушка
+	}
 }
