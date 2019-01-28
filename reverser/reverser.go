@@ -30,7 +30,7 @@ func NewReverser(tables *[]string) *Reverser {
 	3) создание карты отношений между таблицами
 	4) выгрузка в шаблон результатов
  */
-func (r *Reverser) Reverse(db *db.DB, com commands.DbCommander) error {
+func (r *Reverser) Reverse(db *db.DB, com commands.DbCommander) {
 	var tableStructs = make([]*model.Table, 0)
 
 	// Получаем структуры таблиц
@@ -59,7 +59,6 @@ func (r *Reverser) Reverse(db *db.DB, com commands.DbCommander) error {
 	SpecialTypeDefinition(tableCollection, relations)
 	// отправляем в шаблон
 	sendToTemplate(tableStructs)
-	return nil
 }
 
 /**
