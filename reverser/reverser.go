@@ -5,7 +5,6 @@ import (
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/commands"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/db"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/model"
-	"html/template"
 	"log"
 	"os"
 )
@@ -17,9 +16,9 @@ type Reverser struct {
 	Tables []string
 }
 
-func NewReverser(tables *[]string) *Reverser {
+func NewReverser(tables []string) *Reverser {
 	return &Reverser{
-		Tables: *tables,
+		Tables: tables,
 	}
 }
 
@@ -30,77 +29,50 @@ func NewReverser(tables *[]string) *Reverser {
 	3) создание карты отношений между таблицами
 	4) выгрузка в шаблон результатов
  */
-func (r *Reverser) Reverse(db *db.DB, com commands.DbCommander) {
-	var tableStructs = make([]*model.Table, 0)
+func (r *Reverser) Reverse(db *db.DB, com commands.DbCommander, flags map[string]bool) {
+	var tableCollection = make(map[string]*model.Table, 0)
+	var tableRelations = make(map[string]*model.Relation, 0)
 
-	// Получаем структуры таблиц
-	for _, table := range r.Tables {
-		tableStruct := com.GetTableStruct(table, db)
-		if tableStruct != nil && len(tableStruct.Fields) > 0 {
-			// достаем внешние ключи
-			tableStruct.ForeignKeys = com.GetForeignKeys(table, db)
-			tableStructs = append(tableStructs, tableStruct)
-		}
-	}
+	tableCollection, tableRelations = r.getTableData(tableCollection, tableRelations, com, db, flags)
+
+	SpecialTypeDefinition(tableCollection, tableRelations)
+	// отправляем в шаблон
+	sendToTemplate(tableCollection)
+}
+
+func (r *Reverser) getTableData(tCollection map[string]*model.Table, tRelations map[string]*model.Relation,
+	com commands.DbCommander, db *db.DB, flags map[string]bool) (
+	tableCollection map[string]*model.Table, tableRelation map[string]*model.Relation){
+
+	tableStructs := r.getTablestructs(db, com, flags)
 
 	if len(r.Tables) != len(tableStructs) {
 		deleteNotFoundTables(r.Tables, tableStructs)
 	}
 
-	if len(tableStructs) == 0 {
+	if len(tableStructs) == 0 && len(tCollection) == 0 { // сработает при первом проходе
 		log.Println("| ERROR | Все таблицы которые вы указали, не были найдены в бд. Проверьте названия таблиц.")
 		os.Exit(-1)
 	}
+
 	// Создаем карту отношений таблиц
-	relations := DefiningTableRelations(tableStructs)
-
-	tableCollection := makeTableCollection(tableStructs)
-
-	SpecialTypeDefinition(tableCollection, relations)
-	// отправляем в шаблон
-	sendToTemplate(tableStructs)
+	tableRelation = DefiningTableRelations(tableStructs)
+	// Делаем из среза карту
+	tableCollection = makeTableCollection(tableStructs)
+	if flags["d"] {
+		for {
+			dependencies := r.searchDependenciesTable(tableCollection, tableRelation, db)
+			if len(dependencies) == 0 {
+				break
+			}
+			r.Tables = dependencies
+			tCol, tRel := r.getTableData(tableCollection, tableRelation, com, db, flags)
+			r.addedDependenciesToTableCollection(tableCollection, tCol)
+			r.addedDependenciesToTableRelation(tableRelation, tRel)
+		}
+	}
+	return
 }
-
-/**
-	Выгружает данные в шаблон и создает в папке results graphql структуры
- */
-func sendToTemplate(tables []*model.Table) {
-
-	field := model.Field{}
-	funcMap :=  template.FuncMap{
-		"IsPrimaryKey"      : field.IsPrimaryKey,
-		"IsNullableField"	: field.IsNullableField,
-		"GetValidate"       : field.GetValidate,
-		"GetGraphQlType"	: field.GetGraphQlType,
-		"GetForeignType" 	: model.GetForeignType,
-	}
-
-	t, err := template.New("tables").Funcs(funcMap).Parse(getTemplateStruct())
-	if err != nil {
-		log.Printf("| SYS.ERROR | Не удалось создать шаблон \n")
-		panic(err)
-	}
-	for _,table := range tables {
-		fileName := "results/" + table.Name + ".graphql"
-		fo, err := os.Create(fileName)
-		if err != nil {
-			log.Printf("| SYS.ERROR | Не удалось открыть файл %s, \n", fileName)
-			panic(err)
-		}
-
-		if err := t.Execute(fo, table); err != nil {
-			log.Printf("| SYS.ERROR | При попытке записать в файл %s структуру таблицы %s произошла ошибка:\n",
-			fileName, table.Name)
-			panic(err)
-		}
-
-		if err := fo.Close(); err != nil {
-			log.Printf("| SYS.ERROR | Не удалось закрыть файл %s \n", fileName)
-		}
-	}
-
-}
-
 /**
 	Просматривает все таблички и создает карту отношений таблиц друг к другу
  */
@@ -289,4 +261,19 @@ func deleteNotFoundTables(searchingTables []string, tables []*model.Table) []str
 		}
 	}
 	return searchingTables
+}
+
+func (r *Reverser) getTablestructs(db *db.DB, com commands.DbCommander, flags map[string]bool) []*model.Table {
+	var tableStructs = make([]*model.Table, 0)
+
+	// Получаем структуры таблиц
+	for _, table := range r.Tables {
+		tableStruct := com.GetTableStruct(table, db)
+		if tableStruct != nil && len(tableStruct.Fields) > 0 {
+			// достаем внешние ключи
+			tableStruct.ForeignKeys = com.GetForeignKeys(table, db)
+			tableStructs = append(tableStructs, tableStruct)
+		}
+	}
+	return tableStructs
 }

@@ -27,11 +27,15 @@ func GetDbConfig() *Config {
 	fileName := ".db.yaml"
 	in, err := os.Open(fileName)
 	if err != nil {
-		log.Printf("Не найден файл \"%s\" с настройками бд", fileName)
+		log.Printf("| ERROR | Пожалуйста скопируйте файл \"%s\" под именем \"%s\" ", "example.db.yaml", fileName)
 		os.Exit(-1)
 	}
 
-	viper.ReadConfig(in)
+	if err := viper.ReadConfig(in); err != nil {
+		log.Printf("| SYS.ERROR | Возникла ошибка при чтении файла %s :\n %s", fileName, err.Error())
+		os.Exit(-1)
+	}
+
 	dbParams := viper.GetStringMapString("db")
 
 	if valid, errors := validateDbParams(dbParams); !valid {
