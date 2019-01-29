@@ -19,6 +19,10 @@ func Run(tables []string, flags map[string]bool) {
 	// scanning
 	rev := reverser.NewReverser( tables)
 	com := commands.GetDbCommander(cfg.Db)
+	// Если указан флаг "*" получаем все наши таблицы
+	if flags["*"] {
+		rev.Tables = com.GetAllTableNames(db)
+	}
 
 	if db.CompareDbParams(com) {
 		rev.Reverse(db, com, flags)

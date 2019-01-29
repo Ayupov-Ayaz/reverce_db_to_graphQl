@@ -45,7 +45,7 @@ func getScanningParams() (tables []string, flags map[string]bool) {
 
 func main() {
 	tables, flags := getScanningParams()
-	if len(tables) < 1 {
+	if len(tables) < 1 && !flags["*"]{
 		log.Println("| ERROR | Не заданы таблицы для сканирования!")
 		os.Exit(-1)
 	}
