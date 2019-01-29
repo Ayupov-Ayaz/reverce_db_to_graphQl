@@ -17,6 +17,7 @@ type DbCommander interface {
 
 type TableSearcher interface {
 	GetAllTableNames(db *db.DB) []string
+	GetTableByLike(tables []string, db *db.DB) []string
 }
 
 func GetDbCommander(cfg *db.Config) DbCommander{

@@ -127,6 +127,23 @@ func (mc *MssqlCommands) GetAllTableNames(db *db.DB) []string {
 	return tables
 }
 
+func (mc *MssqlCommands) GetTableByLike(tables []string, db *db.DB) []string {
+	query := `
+	select table_name from INFORMATION_SCHEMA.TABLES where TABLE_TYPE='BASE TABLE' and TABLE_NAME like ?
+	`
+	var allTables = make([]string, 0)
+	for i := 0; i < len(tables); i++ {
+		result, err := mc.getTables(query, db, tables[i])
+		if err != nil {
+			log.Printf("При попытке получить имена таблиц с помощью ключа \"-l\" произошла ошибка:\n%s",
+				err.Error())
+			os.Exit(-1)
+		}
+		allTables = append(allTables, result...)
+	}
+	return allTables
+}
+
 /**
 	Получение таблиц
  */
