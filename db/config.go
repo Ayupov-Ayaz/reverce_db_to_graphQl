@@ -31,7 +31,11 @@ func GetDbConfig() *Config {
 		os.Exit(-1)
 	}
 
-	viper.ReadConfig(in)
+	if err := viper.ReadConfig(in); err != nil {
+		log.Printf("| SYS.ERROR | Возникла ошибка при чтении файла %s :\n %s", fileName, err.Error())
+		os.Exit(-1)
+	}
+
 	dbParams := viper.GetStringMapString("db")
 
 	if valid, errors := validateDbParams(dbParams); !valid {

@@ -17,7 +17,7 @@ func Run(tables *[]string) {
 		os.Exit(-1)
 	}
 	// scanning
-	rev := reverser.NewReverser( tables)
+	rev := reverser.NewReverser(tables)
 	com := commands.GetDbCommander(cfg.Db)
 
 	if db.CompareDbParams(com) {
