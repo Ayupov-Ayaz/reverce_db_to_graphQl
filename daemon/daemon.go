@@ -21,6 +21,6 @@ func Run(tables []string, flags map[string]bool) {
 	com := commands.GetDbCommander(cfg.Db)
 
 	if db.CompareDbParams(com) {
-		rev.Reverse(db, com)
+		rev.Reverse(db, com, flags)
 	}
 }

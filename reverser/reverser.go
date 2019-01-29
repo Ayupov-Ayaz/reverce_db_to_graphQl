@@ -30,18 +30,9 @@ func NewReverser(tables []string) *Reverser {
 	3) создание карты отношений между таблицами
 	4) выгрузка в шаблон результатов
  */
-func (r *Reverser) Reverse(db *db.DB, com commands.DbCommander) {
-	var tableStructs = make([]*model.Table, 0)
+func (r *Reverser) Reverse(db *db.DB, com commands.DbCommander, flags map[string]bool) {
 
-	// Получаем структуры таблиц
-	for _, table := range r.Tables {
-		tableStruct := com.GetTableStruct(table, db)
-		if tableStruct != nil && len(tableStruct.Fields) > 0 {
-			// достаем внешние ключи
-			tableStruct.ForeignKeys = com.GetForeignKeys(table, db)
-			tableStructs = append(tableStructs, tableStruct)
-		}
-	}
+	tableStructs := r.getTablestructs(db, com, flags)
 
 	if len(r.Tables) != len(tableStructs) {
 		deleteNotFoundTables(r.Tables, tableStructs)
@@ -289,4 +280,19 @@ func deleteNotFoundTables(searchingTables []string, tables []*model.Table) []str
 		}
 	}
 	return searchingTables
+}
+
+func (r *Reverser) getTablestructs(db *db.DB, com commands.DbCommander, flags map[string]bool) []*model.Table {
+	var tableStructs = make([]*model.Table, 0)
+
+	// Получаем структуры таблиц
+	for _, table := range r.Tables {
+		tableStruct := com.GetTableStruct(table, db)
+		if tableStruct != nil && len(tableStruct.Fields) > 0 {
+			// достаем внешние ключи
+			tableStruct.ForeignKeys = com.GetForeignKeys(table, db)
+			tableStructs = append(tableStructs, tableStruct)
+		}
+	}
+	return tableStructs
 }
