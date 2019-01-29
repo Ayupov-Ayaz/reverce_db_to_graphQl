@@ -1,0 +1,7 @@
+db:
+  Driver: mssql
+  User: ******
+  Password: ******
+  Host: ******
+  Database: ******
+  Port: 1433
