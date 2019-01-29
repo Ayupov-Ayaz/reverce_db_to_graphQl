@@ -59,6 +59,18 @@ func (r *Reverser) getTableData(tCollection map[string]*model.Table, tRelations 
 	tableRelation = DefiningTableRelations(tableStructs)
 	// Делаем из среза карту
 	tableCollection = makeTableCollection(tableStructs)
+	if flags["d"] {
+		for {
+			dependencies := r.searchDependenciesTable(tableCollection, tableRelation, db)
+			if len(dependencies) == 0 {
+				break
+			}
+			r.Tables = dependencies
+			tCol, tRel := r.getTableData(tableCollection, tableRelation, com, db, flags)
+			r.addedDependenciesToTableCollection(tableCollection, tCol)
+			r.addedDependenciesToTableRelation(tableRelation, tRel)
+		}
+	}
 	return
 }
 /**
