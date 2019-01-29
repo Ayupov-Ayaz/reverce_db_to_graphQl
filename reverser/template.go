@@ -10,7 +10,7 @@ import (
 /**
 	Выгружает данные в шаблон и создает в папке results graphql структуры
  */
-func sendToTemplate(tables []*model.Table) {
+func sendToTemplate(tables map[string]*model.Table) {
 
 	field := model.Field{}
 	funcMap :=  template.FuncMap{
@@ -26,7 +26,7 @@ func sendToTemplate(tables []*model.Table) {
 		log.Printf("| SYS.ERROR | Не удалось создать шаблон \n")
 		panic(err)
 	}
-	for _,table := range tables {
+	for _, table := range tables {
 		fileName := "results/" + table.Name + ".graphql"
 		fo, err := os.Create(fileName)
 		if err != nil {

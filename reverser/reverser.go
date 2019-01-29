@@ -30,6 +30,19 @@ func NewReverser(tables []string) *Reverser {
 	4) выгрузка в шаблон результатов
  */
 func (r *Reverser) Reverse(db *db.DB, com commands.DbCommander, flags map[string]bool) {
+	var tableCollection = make(map[string]*model.Table, 0)
+	var tableRelations = make(map[string]*model.Relation, 0)
+
+	tableCollection, tableRelations = r.getTableData(tableCollection, tableRelations, com, db, flags)
+
+	SpecialTypeDefinition(tableCollection, tableRelations)
+	// отправляем в шаблон
+	sendToTemplate(tableCollection)
+}
+
+func (r *Reverser) getTableData(tCollection map[string]*model.Table, tRelations map[string]*model.Relation,
+	com commands.DbCommander, db *db.DB, flags map[string]bool) (
+	tableCollection map[string]*model.Table, tableRelation map[string]*model.Relation){
 
 	tableStructs := r.getTablestructs(db, com, flags)
 
@@ -37,20 +50,17 @@ func (r *Reverser) Reverse(db *db.DB, com commands.DbCommander, flags map[string
 		deleteNotFoundTables(r.Tables, tableStructs)
 	}
 
-	if len(tableStructs) == 0 {
+	if len(tableStructs) == 0 && len(tCollection) == 0 { // сработает при первом проходе
 		log.Println("| ERROR | Все таблицы которые вы указали, не были найдены в бд. Проверьте названия таблиц.")
 		os.Exit(-1)
 	}
+
 	// Создаем карту отношений таблиц
-	relations := DefiningTableRelations(tableStructs)
-
-	tableCollection := makeTableCollection(tableStructs)
-
-	SpecialTypeDefinition(tableCollection, relations)
-	// отправляем в шаблон
-	sendToTemplate(tableStructs)
+	tableRelation = DefiningTableRelations(tableStructs)
+	// Делаем из среза карту
+	tableCollection = makeTableCollection(tableStructs)
+	return
 }
-
 /**
 	Просматривает все таблички и создает карту отношений таблиц друг к другу
  */
