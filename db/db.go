@@ -63,7 +63,7 @@ func (db *DB) GetParams() *Params{
 	return p
 }
 
-func (db *DB) CompareDbParams(dbCommands Paramser) bool {
+func (db *DB) CompareDbParams(dbCommands Paramser, flags map[string]bool) bool {
 	realized := dbCommands.GetParams()
 	server_params := db.GetParams()
 	err_message := "| ERROR | Вы используете %s: %s, реализация построена для - \"%s\""
@@ -78,7 +78,9 @@ func (db *DB) CompareDbParams(dbCommands Paramser) bool {
 				break
 			}
 		}
-		if !ok {
+		if flags["f"] {
+			ok = true
+		}else if !ok {
 			log.Printf(err_message, "версию", server_params.Version, realized.Version)
 		}
 	}
@@ -87,9 +89,8 @@ func (db *DB) CompareDbParams(dbCommands Paramser) bool {
 		log.Printf(err_message, " пакет обновлений ", server_params.Level, realized.Level)
 		ok = false
 	}
-	if !ok {
-		// TODO: ключ -f
-		log.Printf("Если Вы всё равно желаете запусть программу, передайте ключ \"%s\"", "--version || -v")
+	if !ok && !flags["f"]{
+		log.Printf("Если Вы всё равно желаете запусть программу, передайте ключ \"%s\"", "f")
 	}
 	return ok
 }

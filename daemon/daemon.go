@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-func Run(tables *[]string) {
+func Run(tables []string, flags map[string]bool) {
 	cfg := getConfigs()
 	db, err := db.InitDB(cfg.Db)
 	if err != nil {
@@ -20,7 +20,13 @@ func Run(tables *[]string) {
 	rev := reverser.NewReverser(tables)
 	com := commands.GetDbCommander(cfg.Db)
 
-	if db.CompareDbParams(com) {
-		rev.Reverse(db, com)
+	if flags["*"] { // Если указан флаг "*" получаем все наши таблицы
+		rev.Tables = com.GetAllTableNames(db)
+	} else if flags["l"] { // Если указан флаг "l" получаем таблицы через оператор like
+		rev.Tables = com.GetTableByLike(tables, db)
+	}
+
+	if db.CompareDbParams(com, flags) {
+		rev.Reverse(db, com, flags)
 	}
 }

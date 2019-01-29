@@ -4,6 +4,7 @@ import (
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/db"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/model"
 	"log"
+	"os"
 )
 
 type MssqlCommands struct {
@@ -108,4 +109,62 @@ func (mc *MssqlCommands) GetForeignKeys(tableName string, db *db.DB) []*model.Fo
 		log.Printf("| NOTICE | Таблица %s пропущена", tableName)
 	}
 	return foreignKeys
+}
+
+/**
+	Получает названия всех таблиц в базе данных
+ */
+func (mc *MssqlCommands) GetAllTableNames(db *db.DB) []string {
+	query := `
+		SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE'
+		`
+	tables, err :=  mc.getTables(query, db, nil)
+	if err != nil {
+		log.Printf("| DB.ERROR |При попытке получить названия всех таблиц в бд произошла ошибка:\n %s \n",
+			err.Error())
+		os.Exit(-1)
+	}
+	return tables
+}
+
+func (mc *MssqlCommands) GetTableByLike(tables []string, db *db.DB) []string {
+	query := `
+	select table_name from INFORMATION_SCHEMA.TABLES where TABLE_TYPE='BASE TABLE' and TABLE_NAME like ?
+	`
+	var allTables = make([]string, 0)
+	for i := 0; i < len(tables); i++ {
+		result, err := mc.getTables(query, db, tables[i])
+		if err != nil {
+			log.Printf("При попытке получить имена таблиц с помощью ключа \"-l\" произошла ошибка:\n%s",
+				err.Error())
+			os.Exit(-1)
+		}
+		allTables = append(allTables, result...)
+	}
+	return allTables
+}
+
+/**
+	Получение таблиц
+ */
+func (mc *MssqlCommands) getTables(query string, db *db.DB, params interface{}) (tables []string, err error) {
+	var res []struct {
+		Name string `db:"table_name"`
+	}
+
+	if params == nil {
+		err = db.Select(&res, query)
+	} else {
+		err = db.Select(&res, query, params)
+	}
+
+	if  err != nil {
+		return nil, err
+	}
+
+	// TODO: pull workers
+	for _, table := range res {
+		tables = append(tables, table.Name)
+	}
+	return
 }
