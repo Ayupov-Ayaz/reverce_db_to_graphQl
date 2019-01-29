@@ -35,7 +35,7 @@ func (mc *MssqlCommands) GetSupportedVersions() []string {
  */
 func (mc *MssqlCommands) GetTableStruct(tableName string, db *db.DB) (table *model.Table) {
 
-	fields := []*model.Field{}
+	var fields []*model.Field
 
 	query := `
 		declare @table_name varchar(255) = ?
@@ -79,7 +79,7 @@ func (mc *MssqlCommands) GetTableStruct(tableName string, db *db.DB) (table *mod
  */
 func (mc *MssqlCommands) GetForeignKeys(tableName string, db *db.DB) []*model.ForeignKey {
 
-	foreignKeyses := []*model.ForeignKey{}
+	var foreignKeys []*model.ForeignKey
 
 	query := `
 	select
@@ -102,10 +102,10 @@ func (mc *MssqlCommands) GetForeignKeys(tableName string, db *db.DB) []*model.Fo
     		on fk.referenced_object_id = tab_prim.object_id
 	where tab.name= ? `
 
-	if err := db.Select(&foreignKeyses, query, tableName); err != nil {
+	if err := db.Select(&foreignKeys, query, tableName); err != nil {
 		log.Printf("| DB.ERROR | Ошибка при получение внешних ключей таблицы %s: \n %s \n",
 			tableName, err.Error())
 		log.Printf("| NOTICE | Таблица %s пропущена", tableName)
 	}
-	return foreignKeyses
+	return foreignKeys
 }
