@@ -8,11 +8,8 @@ import (
 	"os"
 )
 
-type Config struct {
-	Db *db.Config
-}
-
-func Run(cfg *Config, tables *[]string) {
+func Run(tables *[]string) {
+	cfg := getConfigs()
 	db, err := db.InitDB(cfg.Db)
 	if err != nil {
 		log.Printf("| SYS.ERROR | Ошибка при подключении к БД.(Проверьте данные подключения): \n %s",
