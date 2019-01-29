@@ -118,7 +118,7 @@ func (mc *MssqlCommands) GetAllTableNames(db *db.DB) []string {
 	query := `
 		SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE'
 		`
-	tables, err :=  mc.getTables(query, db)
+	tables, err :=  mc.getTables(query, db, nil)
 	if err != nil {
 		log.Printf("| DB.ERROR |При попытке получить названия всех таблиц в бд произошла ошибка:\n %s \n",
 			err.Error())
@@ -130,12 +130,18 @@ func (mc *MssqlCommands) GetAllTableNames(db *db.DB) []string {
 /**
 	Получение таблиц
  */
-func (mc *MssqlCommands) getTables(query string, db *db.DB) (tables []string, err error) {
+func (mc *MssqlCommands) getTables(query string, db *db.DB, params interface{}) (tables []string, err error) {
 	var res []struct {
 		Name string `db:"table_name"`
 	}
 
-	if err := db.Select(&res, query); err != nil {
+	if params == nil {
+		err = db.Select(&res, query)
+	} else {
+		err = db.Select(&res, query, params)
+	}
+
+	if  err != nil {
 		return nil, err
 	}
 
