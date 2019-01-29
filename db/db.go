@@ -88,7 +88,7 @@ func (db *DB) CompareDbParams(dbCommands Paramser) bool {
 		ok = false
 	}
 	if !ok {
-		// TODO: ключ --version || -v
+		// TODO: ключ -f
 		log.Printf("Если Вы всё равно желаете запусть программу, передайте ключ \"%s\"", "--version || -v")
 	}
 	return ok
