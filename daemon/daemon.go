@@ -26,7 +26,7 @@ func Run(tables []string, flags map[string]bool) {
 		rev.Tables = com.GetTableByLike(tables, db)
 	}
 
-	if db.CompareDbParams(com) {
+	if db.CompareDbParams(com, flags) {
 		rev.Reverse(db, com, flags)
 	}
 }
