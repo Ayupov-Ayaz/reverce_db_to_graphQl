@@ -17,9 +17,9 @@ type Reverser struct {
 	Tables []string
 }
 
-func NewReverser(tables *[]string) *Reverser {
+func NewReverser(tables []string) *Reverser {
 	return &Reverser{
-		Tables: *tables,
+		Tables: tables,
 	}
 }
 

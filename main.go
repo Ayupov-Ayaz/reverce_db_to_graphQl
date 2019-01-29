@@ -7,15 +7,15 @@ import (
 )
 
 
-func getTablesNameForScanning() *[]string {
-	return  &[]string{
+func getTablesNameForScanning() []string {
+	return  []string{
 		// set database tables names
 	}
 }
 
 func main() {
 	tables := getTablesNameForScanning()
-	if len(*tables) < 1 {
+	if len(tables) < 1 {
 		log.Println("| ERROR | Не заданы таблицы для сканирования!")
 		os.Exit(-1)
 	}

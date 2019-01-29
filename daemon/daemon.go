@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-func Run(tables *[]string) {
+func Run(tables []string) {
 	cfg := getConfigs()
 	db, err := db.InitDB(cfg.Db)
 	if err != nil {
