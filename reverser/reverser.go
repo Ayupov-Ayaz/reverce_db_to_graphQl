@@ -225,6 +225,16 @@ func makeTableCollection(tablesSlice []*model.Table) map[string]*model.Table{
 			}
 			modelTable.ForeignFields = foreignFields
 		}
+		// Определение @types у таблицы
+		tableTypes := model.GetTableDirectiveCollection()
+		var types = make([]string,0)
+		for _, field := range modelTable.Fields {
+			// softDelete
+			if t, exist := tableTypes[field.Name]; exist {
+				types = append(types, t)
+			}
+		}
+		modelTable.Directives = types
 	}
 	return tableCollection
 }
