@@ -21,7 +21,7 @@ func sendToTemplate(tables map[string]*model.Table) {
 		"GetForeignType" 	: model.GetForeignType,
 	}
 
-	t, err := template.New("tables").Funcs(funcMap).Parse(getTemplateStruct())
+	t, err := template.New("tables").Funcs(funcMap).Parse(getTemplate())
 	if err != nil {
 		log.Printf("| SYS.ERROR | Не удалось создать шаблон \n")
 		panic(err)
@@ -47,7 +47,7 @@ func sendToTemplate(tables map[string]*model.Table) {
 
 }
 
-func getTemplateStruct() string {
+func getTemplate() string {
 	return `
 	type {{.Name}} { {{range.Fields}}
 		{{.Name}}: {{if .IsForeign}}{{GetForeignType .}}{{else}}{{.GetGraphQlType}}{{end}}{{.IsNullableField}} {{.IsPrimaryKey}} {{.GetValidate}}{{end}}
