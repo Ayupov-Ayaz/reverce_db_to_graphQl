@@ -24,9 +24,9 @@ func NewReverser(tables []string) *Reverser {
 
 /**
 	Функция которая запускает процессы:
-	1) сборку данных из бд по таблицам
-	2) получение из бд внешних ключей таблиц
-	3) создание карты отношений между таблицами
+	1) Получает структуры таблиц в виде map[tableName]*model.Table
+	2) Получает отношения таблиц в виде map[tableName]*mode.Relation
+	3) Проставляет спец типы полей опираясь на эти отношения
 	4) выгрузка в шаблон результатов
  */
 func (r *Reverser) Reverse(db *db.DB, com commands.DbCommander, flags map[string]bool) {
@@ -40,11 +40,15 @@ func (r *Reverser) Reverse(db *db.DB, com commands.DbCommander, flags map[string
 	sendToTemplate(tableCollection)
 }
 
+/**
+	Получение структуры таблиц и их отношений, если указан ключ -d то будет рекурсивно доставать таблицы которые
+	ссылаются на найденные
+ */
 func (r *Reverser) getTableData(tCollection map[string]*model.Table, tRelations map[string]*model.Relation,
 	com commands.DbCommander, db *db.DB, flags map[string]bool) (
 	tableCollection map[string]*model.Table, tableRelation map[string]*model.Relation){
 
-	tableStructs := r.getTablestructs(db, com, flags)
+	tableStructs := r.getTableStructs(db, com, flags)
 
 	if len(r.Tables) != len(tableStructs) {
 		deleteNotFoundTables(r.Tables, tableStructs)
@@ -221,6 +225,16 @@ func makeTableCollection(tablesSlice []*model.Table) map[string]*model.Table{
 			}
 			modelTable.ForeignFields = foreignFields
 		}
+		// Определение @types у таблицы
+		tableTypes := model.GetTableDirectiveCollection()
+		var types = make([]string,0)
+		for _, field := range modelTable.Fields {
+			// softDelete
+			if t, exist := tableTypes[field.Name]; exist {
+				types = append(types, t)
+			}
+		}
+		modelTable.Directives = types
 	}
 	return tableCollection
 }
@@ -263,7 +277,7 @@ func deleteNotFoundTables(searchingTables []string, tables []*model.Table) []str
 	return searchingTables
 }
 
-func (r *Reverser) getTablestructs(db *db.DB, com commands.DbCommander, flags map[string]bool) []*model.Table {
+func (r *Reverser) getTableStructs(db *db.DB, com commands.DbCommander, flags map[string]bool) []*model.Table {
 	var tableStructs = make([]*model.Table, 0)
 
 	// Получаем структуры таблиц
