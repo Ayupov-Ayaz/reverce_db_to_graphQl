@@ -24,7 +24,7 @@ func (f *Field) IsPrimaryKey() string {
 }
 
 func (f *Field) IsNullableField() string {
-	if f.IsNullable {
+	if f.IsNullable && !f.IsPrimary {
 		return ""
 	}
 	return "!"
