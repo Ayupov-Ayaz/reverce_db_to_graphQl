@@ -55,7 +55,7 @@ func (r *Reverser) getTableData(tCollection map[string]*model.Table, tRelations 
 	}
 
 	if len(tableStructs) == 0 && len(tCollection) == 0 { // сработает при первом проходе
-		log.Println("| ERROR | Все таблицы которые вы указали, не были найдены в бд. Проверьте названия таблиц.")
+		log.Println("| ERROR | Ни одна таблица,которую вы указали, не была найдена. Проверьте названия таблиц.")
 		os.Exit(-1)
 	}
 
