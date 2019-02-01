@@ -47,9 +47,15 @@ func (r *Reverser) addedDependenciesToTableRelation(mainRelations map[string]*mo
 	for tableName := range dependencies {
 		if mainRel, exists := mainRelations[tableName]; !exists {
 			mainRelations[tableName] = dependencies[tableName]
+
 		} else if mainRel.LinkedTo == nil &&  dependencies[tableName].LinkedTo != nil{
 			mainRel.LinkedTo =  dependencies[tableName].LinkedTo
-		} else if mainRel.LinkedTo != nil &&  dependencies[tableName].LinkedTo != nil {
+
+		} else if mainRel.LinkedTo != nil &&  dependencies[tableName].LinkedTo != nil &&
+			mainRel.LinkedTo[tableName] == nil && dependencies[tableName].LinkedTo[tableName] !=nil {
+				mainRel.LinkedTo[tableName] = dependencies[tableName].LinkedTo[tableName]
+
+		} else if mainRel.LinkedTo[tableName] != nil && dependencies[tableName].LinkedTo[tableName] !=nil {
 			mainRel.LinkedTo[tableName].MergeRelationKey(dependencies[tableName].LinkedTo[tableName])
 		}
 	}
