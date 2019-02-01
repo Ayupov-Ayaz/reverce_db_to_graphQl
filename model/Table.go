@@ -7,7 +7,6 @@ type Table struct {
 	Fields        []*Field
 	ForeignKeys   []*ForeignKey
 	ForeignFields map[string]*Field
-	Directives    []string
 }
 
 func GetTableDirectivesByTable(t Table) string {
