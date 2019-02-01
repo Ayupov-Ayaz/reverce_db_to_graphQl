@@ -10,7 +10,7 @@ import (
 
 func Run(tables []string, flags map[string]bool) {
 	cfg := getConfigs()
-	db, err := db.InitDB(cfg.Db)
+	dbCon, err := db.InitDB(cfg.Db)
 	if err != nil {
 		errors.PrintFatalError(fmt.Sprintf("Ошибка при подключении к БД.(Проверьте данные подключения): \n %s",
 			err.Error()), true)
@@ -20,9 +20,9 @@ func Run(tables []string, flags map[string]bool) {
 	com := commands.GetDbCommander(cfg.Db)
 
 	if flags["*"] { // Если указан флаг "*" получаем все наши таблицы
-		rev.TablesForSearch = com.GetAllTableNames(db)
+		rev.TablesForSearch = com.GetAllTableNames(dbCon)
 	} else if flags["l"] { // Если указан флаг "l" получаем таблицы через оператор like
-		rev.TablesForSearch = com.GetTableByLike(tables, db)
+		rev.TablesForSearch = com.GetTableByLike(tables, dbCon)
 		if !flags["d"] {
 			var needTables = make([]string, 0)
 			// нужно будет вывести только те таблицы которые были запрошены, по этому записываем их названия в срез
@@ -33,7 +33,7 @@ func Run(tables []string, flags map[string]bool) {
 		}
 	}
 
-	if db.CompareDbParams(com, flags) {
-		rev.Reverse(db, com, flags)
+	if dbCon.CompareDbParams(com, flags) {
+		rev.Reverse(dbCon, com, flags)
 	}
 }
