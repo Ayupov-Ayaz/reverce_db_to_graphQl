@@ -1,7 +1,8 @@
 package model
 
 import (
-	"log"
+	"fmt"
+	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/errors"
 	"strconv"
 	"strings"
 )
@@ -42,7 +43,8 @@ func (f *Field) GetGraphQlType() string {
 	case "time":	 return "Time"
 
 	default:
-		log.Printf("| ERROR | Не указан преобразователь типа для %s, тип найден у поля %s\n", f.Type, f.Name)
+		errors.PrintError(fmt.Sprintf("| ERROR | Не указан преобразователь типа для %s, тип найден у поля %s\n",
+			f.Type, f.Name), false)
 		return f.Type
 	}
 }

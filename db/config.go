@@ -2,10 +2,12 @@ package db
 
 import (
 	"fmt"
+	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/errors"
 	"github.com/viper"
 	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -27,20 +29,21 @@ func GetDbConfig() *Config {
 	fileName := ".db.yaml"
 	in, err := os.Open(fileName)
 	if err != nil {
-		log.Printf("| ERROR | Пожалуйста скопируйте файл \"%s\" под именем \"%s\" ", "example.db.yaml", fileName)
-		os.Exit(-1)
+		errors.PrintError(fmt.Sprintf("Пожалуйста скопируйте файл \"%s\" под именем \"%s\" ",
+			"example.db.yaml", fileName), true)
 	}
 
 	if err := viper.ReadConfig(in); err != nil {
-		log.Printf("| SYS.ERROR | Возникла ошибка при чтении файла %s :\n %s", fileName, err.Error())
-		os.Exit(-1)
+		errors.PrintFatalError(fmt.Sprintf("| SYS.ERROR | Возникла ошибка при чтении файла %s :\n %s",
+			fileName, err.Error()), true)
 	}
 
 	dbParams := viper.GetStringMapString("db")
 
-	if valid, errors := validateDbParams(dbParams); !valid {
-		log.Printf("У Вас имеются ошибки в заполнении файла конфигурации: \"%s\"", fileName)
-		for _, err := range errors {
+	if valid, errs := validateDbParams(dbParams); !valid {
+		errors.PrintError(fmt.Sprintf("У Вас имеются ошибки в заполнении файла конфигурации: \"%s\"",
+			fileName), false)
+		for _, err := range errs {
 			log.Println(err)
 		}
 		os.Exit(-1)
@@ -111,7 +114,7 @@ func validateDbParams(dbParams map[string]string) (valid bool, errs []string) {
 }
 
 func isEmptyDbParam(s string) bool {
-	if len(s) == 0 || s == "******" {
+	if len(strings.TrimSpace(s)) == 0 {
 		return true
 	}
 	return false

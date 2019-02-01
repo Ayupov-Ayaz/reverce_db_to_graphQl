@@ -1,10 +1,10 @@
 package impl
 
 import (
+	"fmt"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/db"
+	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/errors"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/model"
-	"log"
-	"os"
 )
 
 type MssqlCommands struct {
@@ -64,8 +64,9 @@ func (mc *MssqlCommands) GetTableStruct(tableName string, db *db.DB) (table *mod
 	group by  t_c.COLUMN_NAME, t_c.DATA_TYPE`
 
 	if  err := db.Select(&fields, query, tableName); err != nil {
-		log.Printf("| DB.ERROR | Ошибка при получении структуры таблицы = %s :\n %s \n", tableName, err.Error())
-		log.Printf("| NOTICE | Таблица %s пропущена", tableName)
+		errors.PrintDbError(fmt.Sprintf("Ошибка при получении структуры таблицы = %s :\n %s \n",
+			tableName, err.Error()), false)
+		errors.PrintNotice(fmt.Sprintf("Таблица %s пропущена", tableName))
 		return nil
 	}
 	t := &model.Table{
@@ -104,9 +105,9 @@ func (mc *MssqlCommands) GetForeignKeys(tableName string, db *db.DB) []*model.Fo
 	where tab.name= ? `
 
 	if err := db.Select(&foreignKeys, query, tableName); err != nil {
-		log.Printf("| DB.ERROR | Ошибка при получение внешних ключей таблицы %s: \n %s \n",
-			tableName, err.Error())
-		log.Printf("| NOTICE | Таблица %s пропущена", tableName)
+		errors.PrintNotice(fmt.Sprintf("Таблица %s пропущена", tableName))
+		errors.PrintDbError(fmt.Sprintf("Ошибка при получение внешних ключей таблицы %s: \n %s \n",
+			tableName, err.Error()), false)
 	}
 	return foreignKeys
 }
@@ -120,9 +121,8 @@ func (mc *MssqlCommands) GetAllTableNames(db *db.DB) []string {
 		`
 	tables, err :=  mc.getTables(query, db, nil)
 	if err != nil {
-		log.Printf("| DB.ERROR |При попытке получить названия всех таблиц в бд произошла ошибка:\n %s \n",
-			err.Error())
-		os.Exit(-1)
+		errors.PrintDbError(fmt.Sprintf("При попытке получить названия всех таблиц в бд произошла ошибка:\n %s\n",
+			err.Error()), true)
 	}
 	return tables
 }
@@ -135,9 +135,8 @@ func (mc *MssqlCommands) GetTableByLike(tables []string, db *db.DB) []string {
 	for i := 0; i < len(tables); i++ {
 		result, err := mc.getTables(query, db, tables[i])
 		if err != nil {
-			log.Printf("При попытке получить имена таблиц с помощью ключа \"-l\" произошла ошибка:\n%s",
-				err.Error())
-			os.Exit(-1)
+			errors.PrintFatalError(fmt.Sprintf("При попытке получить имена таблиц с помощью ключа \"-l\" " +
+				"произошла ошибка:\n%s", err.Error()), true)
 		}
 		allTables = append(allTables, result...)
 	}
