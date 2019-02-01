@@ -51,7 +51,7 @@ func sendToTemplate(tables map[string]*model.Table) {
 func getTemplate() string {
 	return `
 	type {{.Name}}{{GetTableDirectiveByTable .}} { {{range.Fields}}
-		{{.Name}}: {{if .IsForeign}}{{GetForeignType .}}{{else}}{{.GetGraphQlType}}{{end}}{{.IsNullableField}} {{.IsPrimaryKey}} {{.GetValidate}}{{end}}
+		{{.Name}}: {{.IsPrimaryKey}}{{if .IsForeign}} {{GetForeignType .}}{{else}} {{.GetGraphQlType}}{{end}}{{.IsNullableField}} {{.GetValidate}}{{end}}
 	}
 `
 }
