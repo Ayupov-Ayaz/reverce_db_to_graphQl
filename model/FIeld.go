@@ -32,21 +32,13 @@ func (f *Field) IsNullableField() string {
 
 func (f *Field) GetGraphQlType() string {
 	switch f.Type {
-	case "varchar":  return "String"
-	case "datetime": return "Datetime"
+	case "varchar", "nvarchar", "nchar", "char", "text", "timestamp", "ntext", "image", "varbinary":  return "String"
+	case "int", "bigint", "real", "numeric", "smallint" : 	 return "Int"
+	case "datetime", "datetime2", "smalldatetime": return "Datetime"
+	case "tinyint", "bit":  return "Boolean"
 	case "date": 	 return "Date"
-	case "int": 	 return "Int"
-	case "float": 	 return "Float"
-	case "tinyint":  return "Boolean"
-	case "numeric":  return "Int"
-	case "char":	 return "String"
-	case "bit":		 return "Boolean"
-	case "bigint":	 return "Int"
-	case "nchar":	 return "String"
-	case "nvarchar": return "String"
+	case "float", "money", "decimal": 	 return "Float"
 	case "time":	 return "Time"
-	case "real":	 return "Int"
-
 
 	default:
 		log.Printf("| ERROR | Не указан преобразователь типа для %s, тип найден у поля %s\n", f.Type, f.Name)
