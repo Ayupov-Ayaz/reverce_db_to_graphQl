@@ -125,73 +125,36 @@ func SpecialTypeDefinition(tables map[string]*model.Table, relations map[string]
 	for tableName, table := range tables {
 		// если есть внешние ключи
 		if len(table.ForeignKeys) > 0 {
-			// получаем все отношения для нашей таблицы
-			relLinkedTo := relations[table.Name].LinkedTo
-			// пробегаем по отношениям таблиц к которым ссылается наша таблица
-			for toTable, keyMap := range relLinkedTo {
-				// пробегаем по всем полям которые ссылаются на другие таблицы
+			// получаем все ссылки на другие таблицы по текущей таблице
+			linkedTo := relations[table.Name].LinkedTo
+			// пробегаем по отношениям таблиц к которым ссылается текущая таблица
+			for toTable, relKey := range linkedTo {
+				// пробегаем по всем полям нашей таблицы  которые яв-ся внешними ключами
 				for _, field := range table.ForeignFields {
-					if field.Name == keyMap["fk"] {
-						/* 1. Один к одному:
-							Если f_key по нашей табличке(table.Name) уникальное и у таблицы к которой у нас
-							отношение(toTable) есть обратное отношение к нашей таблице, и ее поле f_key тоже уникальное
-
-						  2. Один ко многим:
-							Если f_key по нашей таблице(table.Name) уникальное, а таблица к которой мы
-							ссылкаемся(toTable) не ссылается на нас
-						*/
-
+					// проверяем, есть ли какие нибудь отношения по внешнему ключу
+					if _, exist :=  relKey.FieldsRk[field.Name];	exist {
 						// получаем таблицу к которой у нас отношение
-						if linkTable, ok := tables[toTable]; ok {
-							if len(linkTable.ForeignKeys) > 0 {
-								if self, ok := relations[toTable]; ok {
-									// ищем обратные отношения
-									if inverseRel, foundInverseRelation := self.LinkedTo[tableName];
-									foundInverseRelation {
-										for _, inverseTableField := range tables[toTable].ForeignFields {
-											if inverseRel["fk"] == inverseTableField.Name {
-												if field.IsUnique && inverseTableField.IsUnique {
-													field.FkType = toTable  // OneToOne
-												} else if field.IsUnique && !inverseTableField.IsUnique {
-													field.FkType = "[" + toTable + getNullSign(tables,
-														tableName, field.Name) + "]" // OneToMany
-												} else if !field.IsUnique && inverseTableField.IsUnique {
-													field.FkType = toTable // ManyToOne
-												} else {
-													field.FkType = "[" + toTable + getNullSign(tables,
-														tableName, field.Name) + "]"
-												}
-											} else {
-												err := "| NOTICE | Для строки %s.%s не найдены внешние ключи." +
-													"Постройте отношение в ручную для поля %s.%s\n"
-												fmt.Printf(err , toTable, inverseTableField.Name, table.Name, field.Name)
-											}
-										}
-									} else {
-										// Если нету обратных отношений (например, главная таблица,
-										// к которой все ссылаются)
+						if linkToTable, ok := tables[toTable]; ok {
+
+								// ищем поле на которое ссылается наш внешний ключ
+								for _, toField := range linkToTable.Fields {
+									// находим поле на которое ссылается наш ForeignKey
+									if relKey.FieldsRk[field.Name] == toField.Name {
 										if field.IsUnique {
-											field.FkType = toTable // OneToMany
+											field.FkType = toTable
+										} else if !field.IsUnique && toField.IsUnique ||
+											!field.IsUnique && toField.IsPrimary {
+											field.FkType = "[" + toTable + "!]"
+										}  else if !field.IsUnique && !toField.IsUnique {
+											field.FkType = "[" + toTable + "]"
 										} else {
-											/* 3. Многие ко многим:
-											Если f_key по нашей таблице(table.Name) не уникальное и таблица к которой
-											мы ссылаемся(toTable) сама не ссылается никуда
-										*/
-											field.FkType = "[" + toTable + getNullSign(tables,
-												tableName, field.Name) + "]" // ManyToMany
+											fmt.Printf("| NOTICE | Проверить отношение: %s.%s => %s.%s  %s\n",
+												tableName, field.Name, toTable, toField.Name,
+												"(для поля %s прописан тип NO_TABLE_SPECIFIED)")
+											field.FkType = "NO_TABLE_SPECIFIED"
 										}
 									}
-								} else {
-									log.Printf("| ERROR | По таблице %s, не найдены отношения \n", toTable)
 								}
-							} else {
-								// Отношений у таблицы нету.
-								if field.IsUnique {
-									field.FkType = toTable
-								} else {
-									field.FkType = "[" + toTable +   getNullSign(tables, tableName, field.Name) + "]"
-								}
-							}
 						} else {
 							relationError := "| NOTICE | Не удалось определить отношение %s.%s => %s " +
 								"(для поля %s прописан тип NO_TABLE_SPECIFIED)"
@@ -237,21 +200,6 @@ func makeTableCollection(tablesSlice []*model.Table) map[string]*model.Table{
 		modelTable.Directives = types
 	}
 	return tableCollection
-}
-
-// Функция которая проверяет значение isNullable по полю внешнего ключа таблицы
-func getNullSign(tables map[string]*model.Table ,tableName, fkName string) string {
-	if table, ok := tables[tableName]; ok {
-		for _, field := range table.ForeignFields {
-			if !field.IsNullable {
-				return "!"
-			} else {
-				return ""
-			}
-		}
-	}
-	fmt.Printf("| NOTICE | Не задана таблица %s, не удалось проверить на \"nullable\" поле %s ", tableName, fkName)
-	return "NOT_FOUND_TABLE"
 }
 
 /**
