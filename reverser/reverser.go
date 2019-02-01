@@ -12,13 +12,14 @@ import (
   Structure for reversing DataBase structure to GraphQl structure
  */
 type Reverser struct {
-	OutputFileName string
-	Tables []string
+	OutputFileName  string
+	TablesForSearch []string
+	TablesForShow []string // используется если передан флаг l и не передан флаг d
 }
 
 func NewReverser(tables []string) *Reverser {
 	return &Reverser{
-		Tables: tables,
+		TablesForSearch: tables,
 	}
 }
 
@@ -37,7 +38,7 @@ func (r *Reverser) Reverse(db *db.DB, com commands.DbCommander, flags map[string
 
 	SpecialTypeDefinition(tableCollection, tableRelations)
 	// отправляем в шаблон
-	sendToTemplate(tableCollection)
+	r.sendToTemplate(tableCollection, flags)
 }
 
 /**
@@ -50,8 +51,8 @@ func (r *Reverser) getTableData(tCollection map[string]*model.Table, tRelations 
 
 	tableStructs := r.getTableStructs(db, com, flags)
 
-	if len(r.Tables) != len(tableStructs) {
-		deleteNotFoundTables(r.Tables, tableStructs)
+	if len(r.TablesForSearch) != len(tableStructs) {
+		deleteNotFoundTables(r.TablesForSearch, tableStructs)
 	}
 
 	if len(tableStructs) == 0 && len(tCollection) == 0 { // сработает при первом проходе
@@ -63,18 +64,18 @@ func (r *Reverser) getTableData(tCollection map[string]*model.Table, tRelations 
 	tableRelation = DefiningTableRelations(tableStructs)
 	// Делаем из среза карту
 	tableCollection = makeTableCollection(tableStructs)
-	if flags["d"] {
+
 		for {
 			dependencies := r.searchDependenciesTable(tableCollection, tableRelation, db)
 			if len(dependencies) == 0 {
 				break
 			}
-			r.Tables = dependencies
+			r.TablesForSearch = dependencies
 			tCol, tRel := r.getTableData(tableCollection, tableRelation, com, db, flags)
 			r.addedDependenciesToTableCollection(tableCollection, tCol)
 			r.addedDependenciesToTableRelation(tableRelation, tRel)
 		}
-	}
+
 	return
 }
 /**
@@ -219,7 +220,7 @@ func (r *Reverser) getTableStructs(db *db.DB, com commands.DbCommander, flags ma
 	var tableStructs = make([]*model.Table, 0)
 
 	// Получаем структуры таблиц
-	for _, table := range r.Tables {
+	for _, table := range r.TablesForSearch {
 		tableStruct := com.GetTableStruct(table, db)
 		if tableStruct != nil && len(tableStruct.Fields) > 0 {
 			// достаем внешние ключи

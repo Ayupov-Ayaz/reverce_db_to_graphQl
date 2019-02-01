@@ -10,7 +10,18 @@ import (
 /**
 	Выгружает данные в шаблон и создает в папке results graphql структуры
  */
-func sendToTemplate(tables map[string]*model.Table) {
+func (r *Reverser) sendToTemplate(tablesFromSearching map[string]*model.Table, flags map[string]bool) {
+	// Если нужно отобразить таблицы без зависимостей
+	var tables = make(map[string]*model.Table, 0)
+	if flags["l"] && !flags["d"] {
+		for _, tableName := range r.TablesForShow {
+			if tableModel, exist := tablesFromSearching[tableName]; exist {
+				tables[tableName] = tableModel
+			}
+		}
+	} else {
+		tables = tablesFromSearching
+	}
 
 	field := model.Field{}
 	funcMap :=  template.FuncMap{
@@ -22,7 +33,7 @@ func sendToTemplate(tables map[string]*model.Table) {
 		"GetTableDirectivesByTable"	: model.GetTableDirectivesByTable,
 	}
 
-	t, err := template.New("tables").Funcs(funcMap).Parse(getTemplate())
+	t, err := template.New("tablesFromSearching").Funcs(funcMap).Parse(getTemplate())
 	if err != nil {
 		log.Printf("| SYS.ERROR | Не удалось создать шаблон \n")
 		panic(err)

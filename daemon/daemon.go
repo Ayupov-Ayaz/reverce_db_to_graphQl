@@ -21,9 +21,17 @@ func Run(tables []string, flags map[string]bool) {
 	com := commands.GetDbCommander(cfg.Db)
 
 	if flags["*"] { // Если указан флаг "*" получаем все наши таблицы
-		rev.Tables = com.GetAllTableNames(db)
+		rev.TablesForSearch = com.GetAllTableNames(db)
 	} else if flags["l"] { // Если указан флаг "l" получаем таблицы через оператор like
-		rev.Tables = com.GetTableByLike(tables, db)
+		rev.TablesForSearch = com.GetTableByLike(tables, db)
+		if !flags["d"] {
+			var needTables = make([]string, 0)
+			// нужно будет вывести только те таблицы которые были запрошены, по этому записываем их названия в срез
+			for _, table := range rev.TablesForSearch {
+				needTables = append(needTables, table)
+			}
+			rev.TablesForShow = needTables
+		}
 	}
 
 	if db.CompareDbParams(com, flags) {
