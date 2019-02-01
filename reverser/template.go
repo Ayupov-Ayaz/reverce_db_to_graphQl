@@ -16,10 +16,10 @@ func sendToTemplate(tables map[string]*model.Table) {
 	funcMap :=  template.FuncMap{
 		"IsPrimaryKey"      		: field.IsPrimaryKey,
 		"IsNullableField"			: field.IsNullableField,
-		"GetValidate"       		: field.GetValidate,
+		"GetDirectories"       		: field.GetDirectories,
 		"GetGraphQlType"			: field.GetGraphQlType,
 		"GetForeignType" 			: model.GetForeignType,
-		"GetTableDirectiveByTable"	: model.GetTableDirectiveByTable,
+		"GetTableDirectivesByTable"	: model.GetTableDirectivesByTable,
 	}
 
 	t, err := template.New("tables").Funcs(funcMap).Parse(getTemplate())
@@ -50,8 +50,8 @@ func sendToTemplate(tables map[string]*model.Table) {
 
 func getTemplate() string {
 	return `
-	type {{.Name}}{{GetTableDirectiveByTable .}} { {{range.Fields}}
-		{{.Name}}: {{.IsPrimaryKey}}{{if .IsForeign}} {{GetForeignType .}}{{else}} {{.GetGraphQlType}}{{end}}{{.IsNullableField}} {{.GetValidate}}{{end}}
+	type {{.Name}} {{GetTableDirectivesByTable .}} { {{range.Fields}}
+		{{.Name}}: {{.IsPrimaryKey}}{{if .IsForeign}} {{GetForeignType .}}{{else}} {{.GetGraphQlType}}{{end}}{{.IsNullableField}} {{.GetDirectories}}{{end}}
 	}
 `
 }
