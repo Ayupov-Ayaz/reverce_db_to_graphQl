@@ -2,8 +2,8 @@ package reverser
 
 import (
 	"fmt"
+	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/errors"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/model"
-	"log"
 	"os"
 	"text/template"
 )
@@ -36,8 +36,7 @@ func (r *Reverser) sendToTemplate(tablesFromSearching map[string]*model.Table, f
 
 	t, err := template.New("tablesFromSearching").Funcs(funcMap).Parse(getTemplate())
 	if err != nil {
-		log.Printf("| SYS.ERROR | Не удалось создать шаблон \n")
-		panic(err)
+		errors.PrintFatalError(fmt.Sprintf("Не удалось создать шаблон \n %s", err.Error()), true)
 	}
 	var i int
 	for _, table := range tables {
@@ -45,18 +44,17 @@ func (r *Reverser) sendToTemplate(tablesFromSearching map[string]*model.Table, f
 		fileName := "results/" + table.Name + ".graphql"
 		fo, err := os.Create(fileName)
 		if err != nil {
-			log.Printf("| SYS.ERROR | Не удалось открыть файл %s, \n", fileName)
-			panic(err)
+			errors.PrintFatalError(fmt.Sprintf("Не удалось открыть файл %s, \n", fileName), true)
+
 		}
 
 		if err := t.Execute(fo, table); err != nil {
-			log.Printf("| SYS.ERROR | При попытке записать в файл %s структуру таблицы %s произошла ошибка:\n",
-				fileName, table.Name)
-			panic(err)
+			errors.PrintFatalError(fmt.Sprintf("При попытке записать в файл %s структуру таблицы %s произошла ошибка:\n",
+				fileName, table.Name), true)
 		}
 
 		if err := fo.Close(); err != nil {
-			log.Printf("| SYS.ERROR | Не удалось закрыть файл %s \n", fileName)
+			errors.PrintError(fmt.Sprintf("Не удалось закрыть файл %s \n", fileName), false)
 		}
 	}
 	fmt.Printf("Создано %d типов \n", i)

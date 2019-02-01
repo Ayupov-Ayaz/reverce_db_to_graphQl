@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/commands"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/db"
+	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/errors"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/model"
 	"log"
-	"os"
 )
 /**
   Structure for reversing DataBase structure to GraphQl structure
@@ -56,8 +56,8 @@ func (r *Reverser) getTableData(tCollection map[string]*model.Table, tRelations 
 	}
 
 	if len(tableStructs) == 0 && len(tCollection) == 0 { // сработает при первом проходе
-		log.Println("| ERROR | Ни одна таблица,которую вы указали, не была найдена. Проверьте названия таблиц.")
-		os.Exit(-1)
+		errors.PrintError(fmt.Sprintln("Ни одна таблица,которую вы указали, не была найдена." +
+			" Проверьте названия таблиц."), true)
 	}
 
 	// Создаем карту отношений таблиц
@@ -158,14 +158,16 @@ func SpecialTypeDefinition(tables map[string]*model.Table, relations map[string]
 									}
 								}
 						} else {
-							relationError := "| NOTICE | Не удалось определить отношение %s.%s => %s " +
+							relationError := " Не удалось определить отношение %s.%s => %s " +
 								"(для поля %s прописан тип NO_TABLE_SPECIFIED)"
 							tableNotFound := relationError + ", Таблица '%s' не была указана \n"
 							relationError2 := relationError + ", Причина не ясна =( "
 							if _, tableExist := tables[toTable]; !tableExist {
-								log.Printf(tableNotFound, tableName, field.Name, toTable, field.Name, toTable)
+								errors.PrintNotice(fmt.Sprintf(tableNotFound, tableName, field.Name, toTable,
+									field.Name, toTable))
 							} else {
-								log.Printf(relationError2, tableName, field.Name, toTable, field.Name)
+								errors.PrintNotice(fmt.Sprintf(relationError2, tableName, field.Name, toTable,
+									field.Name))
 							}
 							field.FkType = "NO_TABLE_SPECIFIED"
 						}

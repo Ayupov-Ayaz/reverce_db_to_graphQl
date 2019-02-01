@@ -2,11 +2,11 @@ package db
 
 import (
 	"fmt"
+	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/errors"
 	_ "github.com/denisenkom/go-mssqldb"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"log"
-	"os"
 )
 
 type DB struct {
@@ -39,8 +39,7 @@ func InitDB(cfg *Config) (*DB, error){
 			cfg.Database,
 		)
 	default:
-		log.Printf("| ERROR | Вы указали неподдерживаемый sql driver: %s", cfg.Driver )
-		os.Exit(-1)
+		errors.PrintFatalError(fmt.Sprintf("Вы указали неподдерживаемый sql driver: %s", cfg.Driver ), true)
 	}
 
 	db, err := sqlx.Connect(cfg.Driver, dsn)
@@ -58,7 +57,7 @@ func (db *DB) GetParams() *Params{
      	, SERVERPROPERTY('ProductLevel')   AS product_level;
 	`
 	if err := db.Get(p, query); err != nil {
-		log.Printf("| ERROR | %s \n", err.Error())
+		errors.PrintError(fmt.Sprintf("%s \n", err.Error()), false)
 	}
 	return p
 }
@@ -66,7 +65,7 @@ func (db *DB) GetParams() *Params{
 func (db *DB) CompareDbParams(dbCommands Paramser, flags map[string]bool) bool {
 	realized := dbCommands.GetParams()
 	server_params := db.GetParams()
-	err_message := "| ERROR | Вы используете %s: %s, реализация построена для - \"%s\""
+	err_message := "Вы используете %s: %s, реализация построена для - \"%s\""
 	ok := true
 	// Проверка версий базы данных
 	if realized.Version != server_params.Version {
