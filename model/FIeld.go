@@ -59,7 +59,7 @@ func GetForeignType(f *Field)  string {
 }
 
 func (f *Field) GetValidate() string {
-	if f.MaxLength != 0 {
+	if f.MaxLength != 0 && f.MaxLength != -1{
 		return "@validate(max:" + strconv.Itoa(f.MaxLength)+")"
 	}
 	return ""
