@@ -3,6 +3,7 @@ package model
 import (
 	"log"
 	"strconv"
+	"strings"
 )
 
 type Field struct {
@@ -50,9 +51,10 @@ func GetForeignType(f *Field)  string {
 	return f.FkType
 }
 
-func (f *Field) GetValidate() string {
-	if f.MaxLength != 0 && f.MaxLength != -1{
-		return "@validate(max:" + strconv.Itoa(f.MaxLength)+")"
+func (f *Field) GetDirectories() string {
+	directories := make([]string, 0)
+	if f.MaxLength != 0 && f.MaxLength != -1 {
+		directories = append(directories, "@validate(max:" + strconv.Itoa(f.MaxLength)+")")
 	}
-	return ""
+	return strings.Join(directories, " ")
 }
