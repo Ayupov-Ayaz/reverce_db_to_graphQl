@@ -1,6 +1,7 @@
 package reverser
 
 import (
+	"fmt"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/model"
 	"log"
 	"os"
@@ -13,7 +14,7 @@ import (
 func (r *Reverser) sendToTemplate(tablesFromSearching map[string]*model.Table, flags map[string]bool) {
 	// Если нужно отобразить таблицы без зависимостей
 	var tables = make(map[string]*model.Table, 0)
-	if flags["l"] && !flags["d"] {
+	if flags["l"] && !flags["d"] && !flags["*"] {
 		for _, tableName := range r.TablesForShow {
 			if tableModel, exist := tablesFromSearching[tableName]; exist {
 				tables[tableName] = tableModel
@@ -38,7 +39,9 @@ func (r *Reverser) sendToTemplate(tablesFromSearching map[string]*model.Table, f
 		log.Printf("| SYS.ERROR | Не удалось создать шаблон \n")
 		panic(err)
 	}
+	var i int
 	for _, table := range tables {
+		i++
 		fileName := "results/" + table.Name + ".graphql"
 		fo, err := os.Create(fileName)
 		if err != nil {
@@ -56,6 +59,7 @@ func (r *Reverser) sendToTemplate(tablesFromSearching map[string]*model.Table, f
 			log.Printf("| SYS.ERROR | Не удалось закрыть файл %s \n", fileName)
 		}
 	}
+	fmt.Printf("Создано %d типов \n", i)
 
 }
 
