@@ -1,7 +1,7 @@
 package model
 
 type ForeignKey struct {
-	FieldName string `db:"field_name"`
-	FkToTable string `db:"fk_to_table"`
-	PkField string 	`db:"pk_field"`
+	FieldName     string `db:"field_name"`
+	FkInTable     string `db:"fk_in_table"`
+	RefersToField string `db:"refers_to_field"`
 }
