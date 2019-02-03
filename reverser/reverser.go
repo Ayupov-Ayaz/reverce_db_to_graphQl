@@ -90,10 +90,10 @@ func DefiningTableRelations(tables []*model.Table) map[string]*model.Relation{
 		// если есть внешние ключи
 		if len(table.ForeignKeys) > 0 {
 			// пробегаем по полям у которых эти внешние ключи есть
-			for _, fk_field := range table.ForeignKeys {
+			for _, fkField := range table.ForeignKeys {
 				// ищем поле в котором есть этот внешний ключ
 				for _, field := range table.Fields {
-					if field.Name == fk_field.FieldName {
+					if field.Name == fkField.FieldName {
 
 						// relation
 						relation, ok := tableRelation[table.Name]
@@ -101,15 +101,15 @@ func DefiningTableRelations(tables []*model.Table) map[string]*model.Relation{
 							relation = &model.Relation{}
 							tableRelation[table.Name] = relation
 						}
-						relation.AddLinkedTo(fk_field.FkToTable, fk_field.FieldName, fk_field.PkField)
+						relation.AddLinkedTo(fkField.FkInTable, fkField.FieldName, fkField.RefersToField)
 
 						// inverseRelation
-						inverseRelation, ok := tableRelation[fk_field.FkToTable]
+						inverseRelation, ok := tableRelation[fkField.FkInTable]
 						if !ok{
 							inverseRelation = &model.Relation{}
-							tableRelation[fk_field.FkToTable] = inverseRelation
+							tableRelation[fkField.FkInTable] = inverseRelation
 						}
-						inverseRelation.AddLinkToMe(table.Name, fk_field.FieldName, fk_field.PkField)
+						inverseRelation.AddLinkToMe(table.Name, fkField.FieldName, fkField.RefersToField)
 						
 					}
 				}
