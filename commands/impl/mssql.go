@@ -86,8 +86,8 @@ func (mc *MssqlCommands) GetForeignKeys(tableName string, db *db.DB) []*model.Fo
 	query := `
 	select
     	col.name			as field_name
-    	,tab_prim.name		as fk_to_table
-    	,col_prim.name		as pk_field
+    	,tab_prim.name		as fk_in_table
+    	,col_prim.name		as refers_to_field
 	
 	from sys.tables													as tab
     	inner join sys.foreign_keys									as fk
