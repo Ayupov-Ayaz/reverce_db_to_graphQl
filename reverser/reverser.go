@@ -42,8 +42,7 @@ func (r *Reverser) Reverse(db *db.DB, com commands.DbCommander, flags map[string
 }
 
 /**
-	Получение структуры таблиц и их отношений, если указан ключ -d то будет рекурсивно доставать таблицы которые
-	ссылаются на найденные
+	Получение структуры таблиц и их отношений рекурсивно получает все таблицы к которым есть внешние ключи
  */
 func (r *Reverser) getTableData(tCollection map[string]*model.Table, tRelations map[string]*model.Relation,
 	com commands.DbCommander, db *db.DB, flags map[string]bool) (

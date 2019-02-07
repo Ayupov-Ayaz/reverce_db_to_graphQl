@@ -57,7 +57,13 @@ func (r *Reverser) sendToTemplate(tablesFromSearching map[string]*model.Table, f
 			errors.PrintError(fmt.Sprintf("Не удалось закрыть файл %s \n", fileName), false)
 		}
 	}
-	fmt.Printf("Создано %d типов \n", i)
+	var res string
+	if i > 1 {
+		res = "Создано %d типа(ов) \n"
+	} else {
+		res = "Создан %d тип \n"
+	}
+	fmt.Printf(res, i)
 
 }
 

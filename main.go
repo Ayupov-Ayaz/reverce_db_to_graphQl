@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/daemon"
 	"github.com/Ayupov-Ayaz/reverse_db_to_graphql/errors"
-	"github.com/viper"
+	"github.com/spf13/viper"
 	"os"
 )
 
