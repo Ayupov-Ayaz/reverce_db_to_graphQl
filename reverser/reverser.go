@@ -136,23 +136,32 @@ func SpecialTypeDefinition(tables map[string]*model.Table, relations map[string]
 					if _, exist :=  relKey.FieldsRk[field.Name];	exist {
 						// получаем таблицу к которой у нас отношение
 						if linkToTable, ok := tables[toTable]; ok {
-								// TODO: Построить обратные отношения для таблиц. Реализовать через создание новых field-ов
 								// ищем поле на которое ссылается наш внешний ключ
 								for _, toField := range linkToTable.Fields {
 									// находим поле на которое ссылается наш ForeignKey
 									if relKey.FieldsRk[field.Name] == toField.Name {
+
+										if tables[toTable].InverseRelations == nil {
+											tables[toTable].InverseRelations = make(map[string]string, 0)
+										}
+
 										if field.IsUnique {
-											field.FkType = toTable
-										} else if !field.IsUnique && toField.IsUnique ||
-											!field.IsUnique && toField.IsPrimary {
-											field.FkType = "[" + toTable + "!]"
-										}  else if !field.IsUnique && !toField.IsUnique {
-											field.FkType = "[" + toTable + "]"
-										} else {
-											fmt.Printf("| NOTICE | Проверить отношение: %s.%s => %s.%s  %s\n",
+											field.FkType = toTable + castIsNullableToString(field)
+											tables[toTable].InverseRelations[table.Name] = table.Name + castIsNullableToString(field)
+
+											} else if !field.IsUnique && toField.IsUnique || !field.IsUnique && toField.IsPrimary {
+												field.FkType = "[" + toTable +  castIsNullableToString(field) + "]"
+												tables[toTable].InverseRelations[table.Name] = table.Name + castIsNullableToString(field)
+
+											}  else if !field.IsUnique && !toField.IsUnique {
+												field.FkType = "[" + toTable + castIsNullableToString(field) + "]"
+												tables[toTable].InverseRelations[table.Name] = "[" + table.Name + castIsNullableToString(field) + "]"
+
+											} else {
+												fmt.Printf("| NOTICE | Проверить отношение: %s.%s => %s.%s  %s\n",
 												tableName, field.Name, toTable, toField.Name,
 												"(для поля %s прописан тип NO_TABLE_SPECIFIED)")
-											field.FkType = "NO_TABLE_SPECIFIED"
+												field.FkType = "NO_TABLE_SPECIFIED"
 										}
 									}
 								}
@@ -231,4 +240,12 @@ func (r *Reverser) getTableStructs(db *db.DB, com commands.DbCommander, flags ma
 		}
 	}
 	return tableStructs
+}
+
+func castIsNullableToString(field *model.Field) string {
+	if field.IsNullable {
+		return ""
+	} else {
+		return "!"
+	}
 }
