@@ -42,12 +42,20 @@ func (r *Reverser) sendToTemplate(tablesFromSearching map[string]*model.Table, f
 	var i int
 	for _, table := range tables {
 		i++
-		fileName := "results/" + table.Name + ".graphql"
-		fo, err := os.Create(fileName)
+		var fo = &os.File{}
+		var fileName = ""
+		if flags["o"] {
+			fileName = "results/results.graphql"
+			fo, err = os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+		} else {
+			fileName = "results/" + table.Name + ".graphql"
+			fo, err = os.Create(fileName)
+		}
+
 		if err != nil {
 			errors.PrintFatalError(fmt.Sprintf("Не удалось открыть файл %s, \n", fileName), true)
-
 		}
+
 
 		if err := t.Execute(fo, table); err != nil {
 			errors.PrintFatalError(fmt.Sprintf("При попытке записать в файл %s структуру таблицы %s произошла ошибка:\n",
