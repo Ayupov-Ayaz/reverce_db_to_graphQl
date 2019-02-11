@@ -18,13 +18,6 @@ type Field struct {
 	FkType string
 }
 
-func (f *Field) IsPrimaryKey() string {
-	if f.IsPrimary {
-		return "@primary"
-	}
-	return ""
-}
-
 func (f *Field) IsNullableField() string {
 	if (!f.IsNullable || f.IsPrimary) && !f.IsForeign {
 		// для внешних ключей вычисляется в функции reverser.DefiningTableRelations()
@@ -58,6 +51,9 @@ func (f *Field) GetDirectories() string {
 	directories := make([]string, 0)
 	if f.MaxLength != 0 && f.MaxLength != -1 {
 		directories = append(directories, "@validate(max:" + strconv.Itoa(f.MaxLength)+")")
+	}
+	if f.IsPrimary {
+		directories = append(directories, "@primary")
 	}
 	return strings.Join(directories, " ")
 }
