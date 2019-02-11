@@ -26,10 +26,11 @@ func (f *Field) IsPrimaryKey() string {
 }
 
 func (f *Field) IsNullableField() string {
-	if f.IsNullable && !f.IsPrimary {
-		return ""
+	if (!f.IsNullable || f.IsPrimary) && !f.IsForeign {
+		// для внешних ключей вычисляется в функции reverser.DefiningTableRelations()
+		return "!"
 	}
-	return "!"
+	return ""
 }
 
 func (f *Field) GetGraphQlType() string {
