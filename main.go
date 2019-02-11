@@ -40,6 +40,9 @@ func getScanningParams() (tables []string, flags map[string]bool) {
 		if flag == "f" {
 			flags["f"] = true
 		}
+		if flag == "o" {
+			flags["o"] = true
+		}
 	}
 	return
 }
