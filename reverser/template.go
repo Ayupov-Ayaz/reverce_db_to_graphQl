@@ -32,6 +32,7 @@ func (r *Reverser) sendToTemplate(tablesFromSearching map[string]*model.Table, f
 		"GetGraphQlType"			: field.GetGraphQlType,
 		"GetForeignType" 			: model.GetForeignType,
 		"GetTableDirectivesByTable"	: model.GetTableDirectivesByTable,
+		"IssetInverseRelations"		: model.IssetInverseRelations,
 	}
 
 	t, err := template.New("tablesFromSearching").Funcs(funcMap).Parse(getTemplate())
@@ -71,6 +72,9 @@ func getTemplate() string {
 	return `
 	type {{.Name}} {{GetTableDirectivesByTable .}} { {{range.Fields}}
 		{{.Name}}: {{.IsPrimaryKey}}{{if .IsForeign}} {{GetForeignType .}}{{else}} {{.GetGraphQlType}}{{end}}{{.IsNullableField}} {{.GetDirectories}}{{end}}
+		{{if IssetInverseRelations .}}
+		#inverse relations{{range $key, $value := .InverseRelations}}
+		{{$key}}: {{$value}}{{end}}{{end}}
 	}
 `
 }
