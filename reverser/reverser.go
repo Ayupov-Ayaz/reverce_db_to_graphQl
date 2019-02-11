@@ -78,6 +78,7 @@ func (r *Reverser) getTableData(tCollection map[string]*model.Table, tRelations 
 	}
 	return
 }
+
 /**
 	Просматривает все таблички и создает карту отношений таблиц друг к другу
  */
