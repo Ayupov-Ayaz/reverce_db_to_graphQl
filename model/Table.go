@@ -7,6 +7,7 @@ type Table struct {
 	Fields        []*Field
 	ForeignKeys   []*ForeignKey
 	ForeignFields map[string]*Field
+	InverseRelations map[string]string
 }
 
 func GetTableDirectivesByTable(t Table) string {
@@ -34,4 +35,8 @@ func GetTableDirectiveCollection() map[string]map[string]string {
 			"delete": 	"@SoftDelete",
 		},
 	}
+}
+
+func IssetInverseRelations(t *Table) bool {
+	return len(t.InverseRelations) > 0
 }
