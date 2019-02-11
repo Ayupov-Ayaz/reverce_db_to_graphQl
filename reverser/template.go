@@ -40,12 +40,16 @@ func (r *Reverser) sendToTemplate(tablesFromSearching map[string]*model.Table, f
 		errors.PrintFatalError(fmt.Sprintf("Не удалось создать шаблон \n %s", err.Error()), true)
 	}
 	var i int
+	var fileName = ""
+	if flags["o"] {
+		fileName = "results/results.graphql"
+		os.Remove(fileName)
+	}
+
 	for _, table := range tables {
 		i++
 		var fo = &os.File{}
-		var fileName = ""
 		if flags["o"] {
-			fileName = "results/results.graphql"
 			fo, err = os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 		} else {
 			fileName = "results/" + table.Name + ".graphql"
