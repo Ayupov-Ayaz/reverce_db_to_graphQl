@@ -25,14 +25,15 @@ func GetTableDirectivesByTable(t Table) string {
 }
 
 func GetTableDirectiveCollection() map[string]map[string]string {
+	softDelete := "@softDelete"
 	return map[string]map[string]string{
 		"table" : {
 			// регулярка или еще что нибудь
 		},
 		"fieldName" : {
-			"del": 		"@SoftDelete",
-			"deleted": 	"@SoftDelete",
-			"delete": 	"@SoftDelete",
+			"del": 		softDelete,
+			"deleted": 	softDelete,
+			"delete": 	softDelete,
 		},
 	}
 }
