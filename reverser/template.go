@@ -73,8 +73,7 @@ func getTemplate() string {
 	type {{.Name}} {{GetTableDirectivesByTable .}} { {{range.Fields}}
 		{{.Name}}: {{.IsPrimaryKey}}{{if .IsForeign}} {{GetForeignType .}}{{else}} {{.GetGraphQlType}}{{end}}{{.IsNullableField}} {{.GetDirectories}}{{end}}
 		{{if IssetInverseRelations .}}
-		#inverse relations 
-		{{range $key, $value := .InverseRelations}}
+		#inverse relations{{range $key, $value := .InverseRelations}}
 		{{$key}}: {{$value}}{{end}}{{end}}
 	}
 `

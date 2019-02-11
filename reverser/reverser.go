@@ -136,7 +136,6 @@ func SpecialTypeDefinition(tables map[string]*model.Table, relations map[string]
 					if _, exist :=  relKey.FieldsRk[field.Name];	exist {
 						// получаем таблицу к которой у нас отношение
 						if linkToTable, ok := tables[toTable]; ok {
-								// ищем поле на которое ссылается наш внешний ключ
 								for _, toField := range linkToTable.Fields {
 									// находим поле на которое ссылается наш ForeignKey
 									if relKey.FieldsRk[field.Name] == toField.Name {
