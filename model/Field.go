@@ -47,7 +47,7 @@ func GetForeignType(f *Field)  string {
 	return f.FkType
 }
 
-func (f *Field) GetDirectories() string {
+func (f *Field) GetDirectives() string {
 	directories := make([]string, 0)
 	if f.MaxLength != 0 && f.MaxLength != -1 {
 		directories = append(directories, "@validate(max:" + strconv.Itoa(f.MaxLength)+")")
