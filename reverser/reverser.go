@@ -109,8 +109,6 @@ func DefiningTableRelations(tables []*model.Table) map[string]*model.Relation{
 							inverseRelation = &model.Relation{}
 							tableRelation[fkField.FkInTable] = inverseRelation
 						}
-						inverseRelation.AddLinkToMe(table.Name, fkField.FieldName, fkField.RefersToField)
-						
 					}
 				}
 			}

@@ -13,9 +13,17 @@ type Table struct {
 func GetTableDirectivesByTable(t Table) string {
 	directiveCollections := GetTableDirectiveCollection()
 	var tableDirectives = make([]string, 0)
-	for _, field := range t.Fields {
-		if directive, exist := directiveCollections["fieldName"][field.Name]; exist {
+	for i := 0; i < len(t.Fields); {
+		field := t.Fields[i]
+		directive, exist := directiveCollections["fieldName"][field.Name]
+		if exist {
 			tableDirectives = append(tableDirectives, directive)
+		}
+
+		if directive == "@softDelete" {
+			t.Fields = append(t.Fields[:i], t.Fields[i+1:]...)
+		} else {
+			i++
 		}
 	}
 	if len(directiveCollections["table"]) > 0 {
@@ -25,14 +33,15 @@ func GetTableDirectivesByTable(t Table) string {
 }
 
 func GetTableDirectiveCollection() map[string]map[string]string {
+	softDelete := "@softDelete"
 	return map[string]map[string]string{
 		"table" : {
 			// регулярка или еще что нибудь
 		},
 		"fieldName" : {
-			"del": 		"@SoftDelete",
-			"deleted": 	"@SoftDelete",
-			"delete": 	"@SoftDelete",
+			"del": 		softDelete,
+			"deleted": 	softDelete,
+			"delete": 	softDelete,
 		},
 	}
 }
